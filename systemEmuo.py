@@ -1,20 +1,34 @@
+'''
+    This module is tasked with handling displaying info the the user. 
+    For this one is simply prints things to the terminal. 
+'''
+
 import time
-import os
-import colorama
-import sys
-from termcolor import colored, cprint
 import threading
 
 class systemEmuo:
+    '''
+        This systemEmuo prints things to the terminal.
+    '''
     def __init__(self, coms = None):
         self.__messageLock = threading.Lock()
-        self.__coms = coms
+        _ = coms
 
     def print_old_continuos(self, message, delay = 0.15, end=''):
+        '''
+            This function prints things to ther termal
+            ARGS:
+                delay: add a delay between each messages
+                end: cheange the lasst thing printed on the line
+        '''
         with self.__messageLock:
             print(message, end=end)
             if delay != 0:
                 time.sleep(delay)
     def clear(self):
+        '''
+            clears the termal.
+        '''
         with self.__messageLock:
             print("\033c", end='') #clears the terminal
+            

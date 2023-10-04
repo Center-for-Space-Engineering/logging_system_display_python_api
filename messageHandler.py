@@ -1,11 +1,16 @@
-from infoHandling.graphicsHandler import graphicsHandler
+'''
+    There should only be ONE of these classes! It is meant to have shared access and has threading protection (using the threadWrapper). 
+    This class routs message to every thread in our code. 
+
+    NOTE: This class needs to be pair with the `threading_python_api` in order to work.
+'''
+# pylint: disable=import-error
+from logging_system_display_python_api.graphicsHandler import graphicsHandler
 import threading
 import time
-from taskHandling.threadWrapper import threadWrapper 
+# pylint: disable=import-error
+from threading_python_api.threadWrapper import threadWrapper 
 
-'''
-There should only be ONE of these classes! It is meant to have shared access and has threading protection.
-'''
 class messageHandler(threadWrapper):
     '''
         This class is the mail man of our code. Any message that needs to be sent to other threads, needs to go through here.
@@ -26,69 +31,73 @@ class messageHandler(threadWrapper):
     def __init__(self):
         super().__init__()
         self.__graphics = graphicsHandler(coms=self)
-        self.__graphicsLock = threading.Lock()
-        self.__threadHandlerLock = threading.Lock()
-        self.__threadHandler = None
+        self.__graphics_lock = threading.Lock()
+        self.__thread_handler_lock = threading.Lock()
+        self.__thread_handler = None
 
-    def setThreadHandler(self, threadHandler):
-        self.__threadHandler = threadHandler
-
-    '''
-        0  : 'red' : Error
-        1  : 'magenta' : warning
-        2  : 'blue' : Log 
-        3  : 'green' : get request
-        4  : 'cyan' : data type found
-        5  : 'yellow' : Sensor connected
-        6  : 'light_cyan' : thread created
-        7  : 'white' : info
-        8  : 'light_magenta' : Command Mapped
-        9  : 'light_blue' : reserved
-    '''
-    def sendMessagePrement(self, message, typeM=2):
-        with self.__graphicsLock :
-            self.__graphics.sendMessagePrement(typeM, message)
-    def printMessage(self, message, typeM=2):
-        with self.__graphicsLock :
-            self.__graphics.sendMessage(typeM, message)
-    def reportThread(self,report):
-        with self.__graphicsLock :
-            self.__graphics.reportThread(report)
-    def reportBytes(self, byteCount):
-        with self.__graphicsLock :
-            self.__graphics.reportByte(byteCount)
+    def set_thread_handler(self, threadHandler):
+        '''
+            This fuction gives the messge handler acces to the threading interface for messages routing.
+        '''
+        self.__thread_handler = threadHandler
+    def send_message_prement(self, message, typeM=2):
+        # pylint: disable=missing-function-docstring
+        with self.__graphics_lock :
+            self.__graphics.send_message_prement(typeM, message)
+    def print_message(self, message, typeM=2):
+        # pylint: disable=missing-function-docstring
+        with self.__graphics_lock :
+            self.__graphics.send_message(typeM, message)
+    def report_thread(self,report):
+        # pylint: disable=missing-function-docstring
+        with self.__graphics_lock :
+            self.__graphics.report_thread(report)
+    def report_bytes(self, byteCount):
+        # pylint: disable=missing-function-docstring
+        with self.__graphics_lock :
+            self.__graphics.report_byte(byteCount)
 
     def flush(self):
-        with self.__graphicsLock :
-            self.__graphics.writeMessageLog()
-    def flushPrem(self):
-        with self.__graphicsLock :
-            self.__graphics.writeMessagePrementLog()
-    def flushThreadReport(self):
-        with self.__graphicsLock :
-            self.__graphics.writeThreadReport()
-    def flushBytes(self):
-        with self.__graphicsLock :
-            self.__graphics.writeByteReport()
-    def clearDisp(self):
-        with self.__graphicsLock :
+        # pylint: disable=missing-function-docstring
+        with self.__graphics_lock :
+            self.__graphics.write_message_log()
+    def flush_prem(self):
+        # pylint: disable=missing-function-docstring
+        with self.__graphics_lock :
+            self.__graphics.write_message_prement_log()
+    def flush_thread_report(self):
+        # pylint: disable=missing-function-docstring
+        with self.__graphics_lock :
+            self.__graphics.write_thread_report()
+    def flush_bytes(self):
+        # pylint: disable=missing-function-docstring
+        with self.__graphics_lock :
+            self.__graphics.write_byte_report()
+    def clear_disp(self):
+        # pylint: disable=missing-function-docstring
+        with self.__graphics_lock :
             self.__graphics.clear()
 
-    def run(self, refresh = 0.5): #Note if things start getting wired it is cause the refresh rate is too fast for the screen to print it.
-        pass
+    def run(self, refresh = 0.5): 
+        '''
+            This function prints thins in the order we want to see them to the screen.
+            NOTE: When debugging it is often useful to comment this function out so the screen 
+                doesent get spammed.
+        '''
         super().setStatus("Running")
-        while (super().getRunning()):
-            self.clearDisp()
-            self.flushPrem()
-            self.flushThreadReport()
+        while (super().get_running()):
+            self.clear_disp()
+            self.flush_prem()
+            self.flush_thread_report()
             self.flush()
-            self.flushBytes()
+            self.flush_bytes()
             time.sleep(refresh)    
 
-    def getSystemEmuo(self):
+    def get_system_emuo(self):
+        # pylint: disable=missing-function-docstring
         return self.__graphics
     
-    def sendRequest(self, thread, request):
+    def send_request(self, thread, request):
         '''
             This function is ment to pass information to other threads with out the two threads knowing about each other.
             Bassically the requester say I want to talk to thread x and here is my request. This funct then pass on that requeset. 
@@ -104,17 +113,17 @@ class messageHandler(threadWrapper):
         '''
         #NOTE: We still need a mutex lock here, even thought the taskHandler is doing locking as well, the taskHandler
         #   pointer (self.__taskHandler) is a varible that needs to be protected.
-        with self.__threadHandlerLock:
-            temp = self.__threadHandler.passRequest(thread, request)
+        with self.__thread_handler_lock:
+            temp = self.__thread_handler.pass_request(thread, request)
         return temp
     
-    def getReturn(self, thread, requestNum):
+    def get_return(self, thread, requestNum):
         '''
             This function is ment to pass the return values form a thread to another thread, without the threads having explicit knowlage of eachother. 
             ARGS:
                 thread: The name of the thread as you see it on the gui, or as it is set in main.py
                 requestNum: the number that you got from passReequests, this is basically your ticket to map info back and forth.
         '''
-        with self.__graphicsLock:
-            temp = self.__threadHandler.passReturn(thread, requestNum)
+        with self.__thread_handler_lock:
+            temp = self.__thread_handler.pass_return(thread, requestNum)
         return temp
