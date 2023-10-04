@@ -1,7 +1,7 @@
-from logging_system_display_python_api.graphicsHandler import graphicsHandler
+from infoHandling.graphicsHandler import graphicsHandler
 import threading
 import time
-from threading_python_api.threadWrapper import threadWrapper 
+from taskHandling.threadWrapper import threadWrapper 
 
 '''
 There should only be ONE of these classes! It is meant to have shared access and has threading protection.
@@ -23,11 +23,14 @@ class messageHandler(threadWrapper):
             RULE: IF a class is directly controling another class (A.K.A Do this thing now), do not use the coms class for sending request.
                   If a class is requesting information, or send indrect reqests (A.K.A process this when you have time) it should go through this class.
     '''
-    def __init__(self, threadHandler = None):
+    def __init__(self):
         super().__init__()
         self.__graphics = graphicsHandler(coms=self)
         self.__graphicsLock = threading.Lock()
         self.__threadHandlerLock = threading.Lock()
+        self.__threadHandler = None
+
+    def setThreadHandler(self, threadHandler):
         self.__threadHandler = threadHandler
 
     '''
@@ -72,6 +75,7 @@ class messageHandler(threadWrapper):
             self.__graphics.clear()
 
     def run(self, refresh = 0.5): #Note if things start getting wired it is cause the refresh rate is too fast for the screen to print it.
+        pass
         super().setStatus("Running")
         while (super().getRunning()):
             self.clearDisp()
