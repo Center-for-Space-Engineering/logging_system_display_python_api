@@ -1,22 +1,28 @@
-import time
-from termcolor import colored, cprint
+'''
+    This modules handels displaying information to the user.
+    In this case it is a gui.
+    NOTE: There should only be one system emuo. 
+'''
+
 import PySimpleGUI as sg
+# pylint: disable=import-error
 from threading_python_api.threadWrapper import threadWrapper # running from server
 import os.path
 import threading
 
-'''
-    This class is used for displaying information. This allows for it to be changed for different implemenations 
-    with out having to change all the intral plumming of the information. 
-'''
+
 class systemEmuo(threadWrapper):
+    '''
+        This class is used for displaying information. This allows for it to be changed for different implemenations 
+        with out having to change all the intral plumming of the information. 
+    '''
     def __init__(self, coms = None):
         super().__init__()
-        self.__messageLock = threading.Lock()
+        self.__message_lock = threading.Lock()
         self.__coms = coms
-        self.__matLabCodeRequstNum = -1
-        self.__avaibleMatlab = None
-        self.__messageMap = {
+        self.__mat_lab_code_requst_num = -1
+        self.__avaible_matlab = None
+        self.__message_map = {
             '-PRELOGS-' : [],
             '-THREADS-' : [],
             '-LOGS-' : [],
@@ -62,35 +68,43 @@ class systemEmuo(threadWrapper):
         self.__window = sg.Window("CSE Ground", self.__layout)
 
     def print_old_continuos(self, message, key = '-LOGS-'):
-        with self.__messageLock:
-            self.__messageMap[key].append(message)
+        # pylint: disable=missing-function-docstring
+        with self.__message_lock:
+            self.__message_map[key].append(message)
     
     def clear(self):
-        with self.__messageLock:
-            for item in self.__messageMap:
-                self.__messageMap[item].clear()
+        # pylint: disable=missing-function-docstring
+        with self.__message_lock:
+            for item in self.__message_map: #pylint: disable=C0206
+                self.__message_map[item].clear()
     
     def run(self):
+        '''
+            This function handles running the gui, it looks for input,
+            then updates the display.
+        '''
         super().setStatus("Running")
         while True:
             event, values = self.__window.read(timeout=20)
-            if event == "Exit" or event == sg.WIN_CLOSED:
+            if event == "Exit" or event == sg.WIN_CLOSED: #pylint: disable=R1714
                 break
             if event == sg.TIMEOUT_EVENT:
-                with self.__messageLock:
-                    for item in self.__messageMap:
-                        self.__window[item].update(self.__messageMap[item])
+                with self.__message_lock:
+                    for item in self.__message_map: #pylint: disable=C0206
+                        self.__window[item].update(self.__message_map[item])
                 #dont need mutex locking here because this thread is the onlything that can touch this internal data
-                if(self.__matLabCodeRequstNum == -1): #check to see if we have sent the request
-                    self.__matLabCodeRequstNum  = self.__coms.sendRequest('Matlab Disbatcher', ['getMappingsList'])
+                #check to see if we have sent the request
+                if self.__mat_lab_code_requst_num == -1: 
+                    self.__mat_lab_code_requst_num  = self.__coms.sendRequest('Matlab Disbatcher', ['getMappingsList'])
                 else : #if we have check to see if there is a return value
-                    self.__avaibleMatlab = self.__coms.getReturn('Matlab Disbatcher', self.__matLabCodeRequstNum)
-                if(self.__avaibleMatlab != None): # if the return time is not none then we update the code
-                    self.__window['-MATCODE-'].update(self.__avaibleMatlab[0])
-                    self.__window['-PROCESS-'].update(self.__avaibleMatlab[1])
+                    self.__avaible_matlab = self.__coms.getReturn('Matlab Disbatcher', self.__mat_lab_code_requst_num)
+                if self.__avaible_matlab is not None: 
+                    # if the return time is not none then we update the code
+                    self.__window['-MATCODE-'].update(self.__avaible_matlab[0])
+                    self.__window['-PROCESS-'].update(self.__avaible_matlab[1])
                     #reset for next pass now
-                    self.__avaibleMatlab = None
-                    self.__matLabCodeRequstNum = -1
+                    self.__avaible_matlab = None
+                    self.__mat_lab_code_requst_num = -1
 
             # Folder name was filled in, make a list of files in the folder
             if event == "-FOLDER-":
@@ -98,7 +112,7 @@ class systemEmuo(threadWrapper):
                 try:
                     # Get list of files in folder
                     file_list = os.listdir(folder)
-                except:
+                except: # pylint: disable=w0702
                     file_list = []
                 print(f"File list: {file_list}")
                 fnames = [
@@ -111,11 +125,11 @@ class systemEmuo(threadWrapper):
             elif event == "-FILE LIST-":  # A file was chosen from the listbox
                 try:
                     pass #TODO: make this create processing chains
-                except:
+                except: # pylint: disable=w0702
                     pass
             elif event == "-MATCODE-":
                 func = values["-MATCODE-"][0]
-                self.__matLabCodeRequstNum  = self.__coms.sendRequest('Matlab Disbatcher', ['dispatchFuntion', func])
+                self.__mat_lab_code_requst_num  = self.__coms.sendRequest('Matlab Disbatcher', ['dispatchFuntion', func])
 
 
         super().setStatus("Complete")
