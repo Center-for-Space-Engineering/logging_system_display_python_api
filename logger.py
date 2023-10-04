@@ -5,7 +5,6 @@
 from datetime import datetime
 import os
 
-
 class logggerCustom():
     '''
         This class is meant to handel INDIVIDUAL LOGGING for other classes. 
@@ -17,7 +16,7 @@ class logggerCustom():
             self.__file = open(file, "w+")
         except : # pylint: disable=w0702
             os.mkdir("logs/")
-            self.__file = open(file, "w+")
+            self.__file = open(file, "w+")# pylint: disable=r1732
 
 
     def send_log(self, text):
