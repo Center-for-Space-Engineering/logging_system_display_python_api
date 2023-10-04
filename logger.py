@@ -6,7 +6,7 @@ from datetime import datetime
 import os
 
 
-class logggerCustom():
+class loggerCustom():
     '''
         This class is meant to handel INDIVIDUAL LOGGING for other classes. 
         It has no threading protection. In other words classes should not 
