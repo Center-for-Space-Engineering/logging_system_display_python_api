@@ -50,3 +50,7 @@ However one function is of note: \
 
 ## `logging`
 This class is a simple logger. Give it a file name and tell it to log messages when you want to. 
+
+## Compling README.md with pandocs
+    To complie .md to a pdf: pandoc -s README.md -V geometry:margin=1in -o README.pdf
+    To complie to a stand alone html doc: pandoc  --metadata title="README" -s --self-contained README.md -o README.html
