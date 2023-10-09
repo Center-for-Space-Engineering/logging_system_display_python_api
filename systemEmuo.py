@@ -95,7 +95,7 @@ class systemEmuo(threadWrapper):
                 #dont need mutex locking here because this thread is the onlything that can touch this internal data
                 #check to see if we have sent the request
                 if self.__mat_lab_code_requst_num == -1: 
-                    self.__mat_lab_code_requst_num  = self.__coms.sendRequest('Matlab Disbatcher', ['getMappingsList'])
+                    self.__mat_lab_code_requst_num  = self.__coms.sendRequest('Matlab Disbatcher', ['get_mappings_list'])
                 else : #if we have check to see if there is a return value
                     self.__avaible_matlab = self.__coms.getReturn('Matlab Disbatcher', self.__mat_lab_code_requst_num)
                 if self.__avaible_matlab is not None: 
