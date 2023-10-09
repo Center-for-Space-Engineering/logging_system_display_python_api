@@ -84,7 +84,7 @@ class messageHandler(threadWrapper):
             NOTE: When debugging it is often useful to comment this function out so the screen 
                 doesent get spammed.
         '''
-        super().setStatus("Running")
+        super().set_status("Running")
         while (super().get_running()):
             self.clear_disp()
             self.flush_prem()

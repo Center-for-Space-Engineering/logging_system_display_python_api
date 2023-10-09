@@ -83,7 +83,7 @@ class systemEmuo(threadWrapper):
             This function handles running the gui, it looks for input,
             then updates the display.
         '''
-        super().setStatus("Running")
+        super().set_status("Running")
         while True:
             event, values = self.__window.read(timeout=20)
             if event == "Exit" or event == sg.WIN_CLOSED: #pylint: disable=R1714
@@ -95,9 +95,9 @@ class systemEmuo(threadWrapper):
                 #dont need mutex locking here because this thread is the onlything that can touch this internal data
                 #check to see if we have sent the request
                 if self.__mat_lab_code_requst_num == -1: 
-                    self.__mat_lab_code_requst_num  = self.__coms.sendRequest('Matlab Disbatcher', ['get_mappings_list'])
+                    self.__mat_lab_code_requst_num  = self.__coms.send_request('Matlab Disbatcher', ['get_mappings_list'])
                 else : #if we have check to see if there is a return value
-                    self.__avaible_matlab = self.__coms.getReturn('Matlab Disbatcher', self.__mat_lab_code_requst_num)
+                    self.__avaible_matlab = self.__coms.get_return('Matlab Disbatcher', self.__mat_lab_code_requst_num)
                 if self.__avaible_matlab is not None: 
                     # if the return time is not none then we update the code
                     self.__window['-MATCODE-'].update(self.__avaible_matlab[0])
@@ -129,8 +129,8 @@ class systemEmuo(threadWrapper):
                     pass
             elif event == "-MATCODE-":
                 func = values["-MATCODE-"][0]
-                self.__mat_lab_code_requst_num  = self.__coms.sendRequest('Matlab Disbatcher', ['dispatchFuntion', func])
+                self.__mat_lab_code_requst_num  = self.__coms.send_request('Matlab Disbatcher', ['dispatch_fucntion', func])
 
 
-        super().setStatus("Complete")
+        super().set_status("Complete")
         self.__window.close()
