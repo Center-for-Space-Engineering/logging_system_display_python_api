@@ -114,7 +114,6 @@ class systemEmuo(threadWrapper):
                     file_list = os.listdir(folder)
                 except: # pylint: disable=w0702
                     file_list = []
-                print(f"File list: {file_list}")
                 fnames = [
                     f
                     for f in file_list
@@ -124,7 +123,7 @@ class systemEmuo(threadWrapper):
                 self.__window["-FILE LIST-"].update(fnames)
             elif event == "-FILE LIST-":  # A file was chosen from the listbox
                 try:
-                    pass #TODO: make this create processing chains
+                     self.__coms.send_request('Matlab Disbatcher', ['add_mapping', values["-FILE LIST-"][0].replace(".m",''), "None", "Example"])
                 except: # pylint: disable=w0702
                     pass
             elif event == "-MATCODE-":
