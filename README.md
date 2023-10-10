@@ -48,3 +48,17 @@ This class handles the display. In this case is uses `pysimpleguis` to dispaly t
 
 ## `logging`
 This class is a simple logger. Give it a file name and tell it to log messages when you want to. 
+
+## Linting
+This is the method that is used to check the code and make sure it fits coding standar and best pratice. The package is called `pylint` and can be installed with \
+``` python
+    pip install pylint  
+```
+or 
+```python
+    pip3 install pylint 
+```
+depending on context. The command to run `pylint` is:
+```python
+    python3 -m pylint --jobs 0 --rcfile .pylintrc <name of python file or folder>
+```

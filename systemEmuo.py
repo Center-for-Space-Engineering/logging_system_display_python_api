@@ -133,3 +133,4 @@ class systemEmuo(threadWrapper):
 
         super().set_status("Complete")
         self.__window.close()
+
