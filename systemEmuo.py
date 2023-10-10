@@ -6,7 +6,7 @@
 
 import PySimpleGUI as sg
 # pylint: disable=import-error
-from threading_python_api.threadWrapper import threadWrapper # running from server
+from threading_python_api.threadWrapper import threadWrapper
 import os.path
 import threading
 
@@ -66,18 +66,15 @@ class systemEmuo(threadWrapper):
 
         ]
         self.__window = sg.Window("CSE Ground", self.__layout)
-
     def print_old_continuos(self, message, key = '-LOGS-'):
         # pylint: disable=missing-function-docstring
         with self.__message_lock:
             self.__message_map[key].append(message)
-    
     def clear(self):
         # pylint: disable=missing-function-docstring
         with self.__message_lock:
             for item in self.__message_map: #pylint: disable=C0206
-                self.__message_map[item].clear()
-    
+                self.__message_map[item].clear()   
     def run(self):
         '''
             This function handles running the gui, it looks for input,
@@ -123,7 +120,8 @@ class systemEmuo(threadWrapper):
                 self.__window["-FILE LIST-"].update(fnames)
             elif event == "-FILE LIST-":  # A file was chosen from the listbox
                 try:
-                     self.__coms.send_request('Matlab Disbatcher', ['add_mapping', values["-FILE LIST-"][0].replace(".m",''), "None", "Example"])
+                    self.mapping_windows()
+                    self.__coms.send_request('Matlab Disbatcher', ['add_mapping', values["-FILE LIST-"][0].replace(".m",''), "None", "Example"])
                 except: # pylint: disable=w0702
                     pass
             elif event == "-MATCODE-":
@@ -133,4 +131,64 @@ class systemEmuo(threadWrapper):
 
         super().set_status("Complete")
         self.__window.close()
+    def mapping_windows(self):
+        '''
+            This function helps the user set up a mapping from data types.
+        '''
+        #build gui 
+        database_display = [sg.Listbox(size=(80, 10), enable_events=True,  key="-DATABASE FEILDS-", values=[], no_scrollbar=True)],
+        input_display = [
+            [
+                sg.Text('Input field', size= (10,5)), 
+                sg.Input(key='-INPUT FIELD-')
+            ],
+            [
+                sg.Text('Output field', size= (10,5)), 
+                sg.Input(key='-OUTPUT FIELD-')
+            ],
+        ]
+        button_dispaly = [
+            [
+                sg.Button('Submit'),
+                sg.Button('Cancel'),
+            ]
+        ]
 
+        layout = [
+            [database_display, input_display],
+            [button_dispaly] 
+            ]
+
+        window = sg.Window('Mapping Edditor: ', layout=layout, modal=True)
+
+        request_num = -1
+        db_list = None
+        input_field = "None"
+        output_field = "None"
+
+        while (True):
+            event, values = window.read(timeout=20)
+            if event == "Exit" or event == sg.WIN_CLOSED:
+                break
+            if event == sg.TIMEOUT_EVENT:
+                #get db feilds list
+                if request_num == -1:
+                    request_num  = self.__coms.send_request('Data Base', ['get_tables_str_list'])
+                else : #if we have check to see if there is a return value
+                    db_list = self.__coms.get_return('Data Base', request_num)
+                if db_list is not None: 
+                    # if the return time is not none then we update the code
+                    window['-DATABASE FEILDS-'].update(db_list)
+                    #reset for next pass now
+                    db_list = None
+            if event == 'Submit':
+                window.close()
+                return input_field, output_field
+            if event == '-INPUT FIELD-':
+                input_field = values[0]
+            if event == '-OUTPUT FIELD-':
+                output_field = values[0]
+            if event == 'Cancel':
+                window['-INPUT FIELD-'].update("")
+                window['-OUTPUT FIELD-'].update("")
+        print(values)
