@@ -120,10 +120,15 @@ class systemEmuo(threadWrapper):
                 self.__window["-FILE LIST-"].update(fnames)
             elif event == "-FILE LIST-":  # A file was chosen from the listbox
                 try:
-                    self.mapping_windows()
-                    self.__coms.send_request('Matlab Disbatcher', ['add_mapping', values["-FILE LIST-"][0].replace(".m",''), "None", "Example"])
-                except: # pylint: disable=w0702
-                    pass
+                    input_field, output_field, out_field_type = self.mapping_windows()
+                    self.__coms.send_request('Matlab Disbatcher', ['add_mapping', values["-FILE LIST-"][0].replace(".m",''), input_field, output_field])
+                    try:
+                        self.__coms.send_request('Matlab Disbatcher', ['add_field_mapping', values["-FILE LIST-"][0].replace(".m",''), output_field, out_field_type])
+                    except Exception as error :
+                        self.__coms.print_message(f"Failed to create matlab mapping: {error}")
+                except Exception as error : # pylint: disable=w0702
+                    self.__coms.print_message(f"Failed to create matlab mapping: {error}")
+
             elif event == "-MATCODE-":
                 func = values["-MATCODE-"][0]
                 self.__mat_lab_code_requst_num  = self.__coms.send_request('Matlab Disbatcher', ['dispatch_fucntion', func])
@@ -134,17 +139,31 @@ class systemEmuo(threadWrapper):
     def mapping_windows(self):
         '''
             This function helps the user set up a mapping from data types.
+            ARGS:
+                None
+            Returns:
+                input_field, output_field, output type
         '''
         #build gui 
-        database_display = [sg.Listbox(size=(80, 10), enable_events=True,  key="-DATABASE FEILDS-", values=[], no_scrollbar=True)],
+        database_display = [
+            [sg.Text('Data Base feilds: ')],
+            [sg.Listbox(size=(80, 10), enable_events=True,  key="-DATABASE FEILDS-", values=[])]
+        ],
         input_display = [
             [
-                sg.Text('Input field', size= (10,5)), 
-                sg.Input(key='-INPUT FIELD-')
+                sg.Text('Input field  (Data  Base feild, None, or bit_stream)', size= (10,5)), 
+                sg.Input(key='-INPUT FIELD-', enable_events=True)
             ],
             [
-                sg.Text('Output field', size= (10,5)), 
-                sg.Input(key='-OUTPUT FIELD-')
+                sg.Text('Output field (Exsisting, or New field)', size= (10,5)), 
+                sg.Input(key='-OUTPUT FIELD-', enable_events=True),
+            ],
+            [
+                sg.Text('Output field type (int(64), float(64), string, bool, bigint, or list <type>'),
+                sg.Input(key='-OUTPUT FIELD TYPE-', enable_events=True),
+            ],
+            [
+                sg.Text('If you use list type, it will create a table that has two columns, one for the index, one for the return value of the defined type.')
             ],
         ]
         button_dispaly = [
@@ -157,14 +176,12 @@ class systemEmuo(threadWrapper):
         layout = [
             [database_display, input_display],
             [button_dispaly] 
-            ]
+        ]
 
         window = sg.Window('Mapping Edditor: ', layout=layout, modal=True)
 
         request_num = -1
         db_list = None
-        input_field = "None"
-        output_field = "None"
 
         while (True):
             event, values = window.read(timeout=20)
@@ -183,12 +200,7 @@ class systemEmuo(threadWrapper):
                     db_list = None
             if event == 'Submit':
                 window.close()
-                return input_field, output_field
-            if event == '-INPUT FIELD-':
-                input_field = values[0]
-            if event == '-OUTPUT FIELD-':
-                output_field = values[0]
+                return values['-INPUT FIELD-'], values['-OUTPUT FIELD-'], values['-OUTPUT FIELD TYPE-']
             if event == 'Cancel':
                 window['-INPUT FIELD-'].update("")
                 window['-OUTPUT FIELD-'].update("")
-        print(values)
