@@ -121,9 +121,9 @@ class systemEmuo(threadWrapper):
             elif event == "-FILE LIST-":  # A file was chosen from the listbox
                 try:
                     input_field, output_field, out_field_type = self.mapping_windows()
-                    self.__coms.send_request('Matlab Disbatcher', ['add_mapping', values["-FILE LIST-"][0].replace(".m",''), input_field, output_field])
+                    self.__coms.send_request('Matlab Disbatcher', ['add_mapping', values["-FILE LIST-"][0].replace(".m",''), input_field, output_field]) #create the mapping in the dispacher 
                     try:
-                        self.__coms.send_request('Matlab Disbatcher', ['add_field_mapping', values["-FILE LIST-"][0].replace(".m",''), output_field, out_field_type])
+                        self.__coms.send_request('Matlab Disbatcher', ['add_field_mapping', values["-FILE LIST-"][0].replace(".m",''), output_field, out_field_type]) # create the need data base structure.
                     except Exception as error :
                         self.__coms.print_message(f"Failed to create matlab mapping: {error}")
                 except Exception as error : # pylint: disable=w0702
