@@ -21,6 +21,7 @@ class systemEmuo(threadWrapper):
         self.__message_lock = threading.Lock()
         self.__coms = coms
         self.__mat_lab_code_requst_num = -1
+        self.__fields_request_num = -1
         self.__avaible_matlab = None
         self.__message_map = {
             '-PRELOGS-' : [],
@@ -38,6 +39,8 @@ class systemEmuo(threadWrapper):
                     values=[], enable_events=True, size=(80, 10), key="-FILE LIST-"
                 )
             ],
+            [sg.Text('Data Base feilds: ')],
+            [sg.Listbox(size=(80, 10), enable_events=True,  key="-DATABASE FEILDS-", values=[])],
             [sg.Text("Avaible MatLab code:")],
             [sg.Listbox(size=(80, 10), enable_events=True,  key="-MATCODE-", values=[])],
         ]
@@ -101,7 +104,19 @@ class systemEmuo(threadWrapper):
                     self.__window['-PROCESS-'].update(self.__avaible_matlab[1])
                     #reset for next pass now
                     self.__avaible_matlab = None
-                    self.__mat_lab_code_requst_num = -1
+                
+                #get db feilds list
+                db_list = None
+                if self.__fields_request_num == -1:
+                    self.__fields_request_num  = self.__coms.send_request('Data Base', ['get_tables_str_list'])
+                else : #if we have check to see if there is a return value
+                    db_list = self.__coms.get_return('Data Base', self.__fields_request_num)
+                if db_list is not None: 
+                    # if the return time is not none then we update the code
+                    self.__window['-DATABASE FEILDS-'].update(db_list)
+                    #reset for next pass now
+                    db_list = None
+                    self.__fields_request_num = -1
 
             # Folder name was filled in, make a list of files in the folder
             if event == "-FOLDER-":
@@ -126,6 +141,7 @@ class systemEmuo(threadWrapper):
                         self.__coms.send_request('Matlab Disbatcher', ['add_field_mapping', values["-FILE LIST-"][0].replace(".m",''), output_field, out_field_type]) # create the need data base structure.
                     except Exception as error :
                         self.__coms.print_message(f"Failed to create matlab mapping: {error}")
+                    self.__mat_lab_code_requst_num = -1 #if everything goes right, we need to signal to the db display to update.
                 except Exception as error : # pylint: disable=w0702
                     self.__coms.print_message(f"Failed to create matlab mapping: {error}")
 
