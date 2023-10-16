@@ -9,6 +9,7 @@ import PySimpleGUI as sg
 from threading_python_api.threadWrapper import threadWrapper
 import os.path
 import threading
+from logging_system_display_python_api.htmlParser import CSEHTMLParser
 
 
 class systemEmuo(threadWrapper):
@@ -144,11 +145,11 @@ class systemEmuo(threadWrapper):
                     self.__mat_lab_code_requst_num = -1 #if everything goes right, we need to signal to the db display to update.
                 except Exception as error : # pylint: disable=w0702
                     self.__coms.print_message(f"Failed to create matlab mapping: {error}")
-
             elif event == "-MATCODE-":
                 func = values["-MATCODE-"][0]
                 self.__mat_lab_code_requst_num  = self.__coms.send_request('Matlab Disbatcher', ['dispatch_fucntion', func])
-
+            elif event == '-DATABASE FEILDS-':
+                self.get_table_info(values['-DATABASE FEILDS-'][0])
 
         super().set_status("Complete")
         self.__window.close()
@@ -220,3 +221,51 @@ class systemEmuo(threadWrapper):
             if event == 'Cancel':
                 window['-INPUT FIELD-'].update("")
                 window['-OUTPUT FIELD-'].update("")
+    def get_table_info(self, table_name):
+        '''
+            This function helps the user see the data base table info
+            ARGS:
+                Table Name
+            Returns:
+                None
+        '''
+        #build gui 
+        database_display = [
+            [sg.Text('Data Base table: ')]
+        ]
+
+        layout = [
+            [database_display]
+        ]
+
+        request_num = -1
+        db_list = None
+
+        while (True):
+            #get db feilds list
+            if request_num == -1:
+                request_num  = self.__coms.send_request('Data Base', ['get_data_type', table_name])
+            else : #if we have check to see if there is a return value
+                db_list = self.__coms.get_return('Data Base', request_num)
+            if db_list is not None: 
+                # if the return time is not none then we update the code
+                parser = CSEHTMLParser()
+                parser.feed(str(db_list))
+                data_obj = parser.get_data()
+                for i in range(len(data_obj)):
+                    try :
+                        layout.append([
+                            sg.Text(data_obj[i]),
+                            sg.Text(data_obj[i + 1])
+                        ])
+                        i += 1
+                    except : 
+                        layout.append([
+                            sg.Text(data_obj[i])
+                        ])
+                break 
+        window = sg.Window('Mapping Edditor: ', layout=layout, modal=True)
+        while True:
+            event, values = window.read(timeout=20)
+            if event == "Exit" or event == sg.WIN_CLOSED:
+                break
