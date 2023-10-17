@@ -3,7 +3,7 @@ from html.parser import HTMLParser
 class CSEHTMLParser(HTMLParser):
     def __init__(self, *, convert_charrefs: bool = True) -> None:
         super().__init__(convert_charrefs=convert_charrefs)
-        self.__data = []
+        self.__data = ""
 
     def handle_starttag(self, tag, attrs):
         pass
@@ -12,7 +12,7 @@ class CSEHTMLParser(HTMLParser):
         pass
 
     def handle_data(self, data):
-        self.__data.append(data)
+        self.__data  += data
     
     def get_data(self):
         return self.__data

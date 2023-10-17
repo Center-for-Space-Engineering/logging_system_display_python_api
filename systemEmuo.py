@@ -231,7 +231,7 @@ class systemEmuo(threadWrapper):
         '''
         #build gui 
         database_display = [
-            [sg.Text('Data Base table: ')]
+            [sg.Text('Data Base Feild: ')]
         ]
 
         layout = [
@@ -252,17 +252,10 @@ class systemEmuo(threadWrapper):
                 parser = CSEHTMLParser()
                 parser.feed(str(db_list))
                 data_obj = parser.get_data()
-                for i in range(len(data_obj)):
-                    try :
-                        layout.append([
-                            sg.Text(data_obj[i]),
-                            sg.Text(data_obj[i + 1])
-                        ])
-                        i += 1
-                    except : 
-                        layout.append([
-                            sg.Text(data_obj[i])
-                        ])
+                
+                layout.append([  
+                    sg.Multiline(size=(80,10), key='-DATA OBJECT-', auto_size_text=True, default_text=data_obj)
+                ])
                 break 
         window = sg.Window('Mapping Edditor: ', layout=layout, modal=True)
         while True:
