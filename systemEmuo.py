@@ -61,11 +61,17 @@ class systemEmuo(threadWrapper):
         # ----- Full layout -----
         self.__layout = [
             [
-                [sg.Column(self.__file_list_column, element_justification='t'),
-                sg.VSeperator(),
-                sg.Column(self.__logs_viewer_column),
+                [
+                    sg.Column(self.__file_list_column, element_justification='t'),
+                    sg.VSeperator(),
+                    sg.Column(self.__logs_viewer_column),
                 ],
-                sg.Frame("Processing Flow", self.__processing_flow_viewer, title_color='blue', key="-PROCESS-"),
+                [
+                    sg.Frame("Processing Flow", self.__processing_flow_viewer, title_color='blue', key="-PROCESS-"),
+                ],
+                [
+                    sg.Button("Get Data From Data Base", key='-GET DATA-'),
+                ]
             ]
 
         ]
@@ -136,8 +142,8 @@ class systemEmuo(threadWrapper):
                 self.__window["-FILE LIST-"].update(fnames)
             elif event == "-FILE LIST-":  # A file was chosen from the listbox
                 try:
-                    input_field, output_field, out_field_type = self.mapping_windows()
-                    self.__coms.send_request('Matlab Disbatcher', ['add_mapping', values["-FILE LIST-"][0].replace(".m",''), input_field, output_field]) #create the mapping in the dispacher 
+                    input_table, output_field, out_field_type, input_field = self.mapping_windows()
+                    self.__coms.send_request('Matlab Disbatcher', ['add_mapping', values["-FILE LIST-"][0].replace(".m",''), input_table, output_field, input_field, ('list' in out_field_type)]) #create the mapping in the dispacher, the last arg just checks to see if it is a list type
                     try:
                         self.__coms.send_request('Matlab Disbatcher', ['add_field_mapping', values["-FILE LIST-"][0].replace(".m",''), output_field, out_field_type]) # create the need data base structure.
                     except Exception as error :
@@ -150,6 +156,8 @@ class systemEmuo(threadWrapper):
                 self.__mat_lab_code_requst_num  = self.__coms.send_request('Matlab Disbatcher', ['dispatch_fucntion', func])
             elif event == '-DATABASE FEILDS-':
                 self.get_table_info(values['-DATABASE FEILDS-'][0])
+            elif event == '-GET DATA-':
+                self.get_data()
 
         super().set_status("Complete")
         self.__window.close()
@@ -168,7 +176,11 @@ class systemEmuo(threadWrapper):
         ],
         input_display = [
             [
-                sg.Text('Input field  (Data  Base feild, None, or bit_stream)', size= (10,5)), 
+                sg.Text('Input Table  (Data  Base table name: None or active table)', size= (10,5)), 
+                sg.Input(key='-INPUT TABLE-', enable_events=True)
+            ],
+            [
+                sg.Text('Input field  (Feild Name: None or field in table)', size= (10,5)), 
                 sg.Input(key='-INPUT FIELD-', enable_events=True)
             ],
             [
@@ -217,10 +229,11 @@ class systemEmuo(threadWrapper):
                     db_list = None
             if event == 'Submit':
                 window.close()
-                return values['-INPUT FIELD-'], values['-OUTPUT FIELD-'], values['-OUTPUT FIELD TYPE-']
+                return values['-INPUT TABLE-'], values['-OUTPUT FIELD-'], values['-OUTPUT FIELD TYPE-'], values['-INPUT FIELD-']
             if event == 'Cancel':
                 window['-INPUT FIELD-'].update("")
                 window['-OUTPUT FIELD-'].update("")
+                window['-INPUT TABLE-'].update("")
     def get_table_info(self, table_name):
         '''
             This function helps the user see the data base table info
@@ -262,3 +275,64 @@ class systemEmuo(threadWrapper):
             event, values = window.read(timeout=20)
             if event == "Exit" or event == sg.WIN_CLOSED:
                 break
+    def get_data(self):
+        '''
+            This function helps the user see the data base saved values
+            ARGS:
+                None
+            Returns:
+                None
+        '''
+        #build gui 
+        database_display = [
+            [sg.Text('Data Base stored info: ')],
+            
+        ]
+
+        layout = [
+            [database_display],
+            [
+                sg.Text("Table name:\t"),
+                sg.Input(key='-INPUT TRABLE NAME-', enable_events=True)
+            ],
+            [
+                sg.Text("Starting table idex: "),
+                sg.Input(key='-INPUT START-', default_text=0, enable_events=True)
+            ],
+            [
+                sg.Multiline(key='-INFO DISPALY-', size=(80,10))
+            ],
+            [
+                sg.Button('Fetch data', key = '-FETCH-')
+            ]
+
+        ]
+
+        request_num = -1
+        db_list = None
+        table_name = ''
+        start = -1
+
+        window = sg.Window('Mapping Edditor: ', layout=layout)
+        while True:
+            event, values = window.read(timeout=20)
+            if event == "Exit" or event == sg.WIN_CLOSED:
+                break
+            if event == '-INPUT TRABLE NAME-':
+                table_name = values['-INPUT TRABLE NAME-']
+            elif event == '-INPUT START-':
+                start =  values['-INPUT START-']
+            elif event == '-FETCH-':
+                if(request_num != -1):
+                    sg.popup("Please wait  already processing request.")
+                elif(table_name == ''):
+                    sg.popup("Please input table name.")
+                else: # all things ready lest make the request
+                    request_num  = self.__coms.send_request('Data Base', ['get_data_large', table_name, start])
+            elif (request_num != -1):# Check to see if there is a return value for the request
+                db_list = self.__coms.get_return('Data Base', request_num)
+            if db_list is not None: 
+                # if the return time is not none then we update the code
+                window['-INFO DISPALY-'].update(db_list)
+                request_num = -1
+                db_list = None

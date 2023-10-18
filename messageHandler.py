@@ -127,3 +127,17 @@ class messageHandler(threadWrapper):
         with self.__thread_handler_lock:
             temp = self.__thread_handler.pass_return(thread, requestNum)
         return temp
+    
+    def check_request(self, thread, requestNum):
+        '''
+            This function is for the small set of case where it is nessary to check and see if the request has completed as
+            aposed to checking the return val. 
+
+            Input:
+                thread
+                requestNum
+            output:
+        '''
+        with self.__thread_handler_lock:
+            temp = self.__thread_handler.check_request(thread, requestNum)
+        return temp
