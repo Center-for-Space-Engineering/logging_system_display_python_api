@@ -199,6 +199,10 @@ class systemEmuo(threadWrapper):
             [
                 sg.Button('Submit'),
                 sg.Button('Cancel'),
+                [
+                    sg.Text(f'Number of inputs: {0}', key='-TEXT NUM INPUTS-'),
+                    sg.Button('Add Input'),
+                ]
             ]
         ]
 
@@ -211,6 +215,8 @@ class systemEmuo(threadWrapper):
 
         request_num = -1
         db_list = None
+        input_lsit = []
+        input_count = 0
 
         while (True):
             event, values = window.read(timeout=20)
@@ -234,6 +240,15 @@ class systemEmuo(threadWrapper):
                 window['-INPUT FIELD-'].update("")
                 window['-OUTPUT FIELD-'].update("")
                 window['-INPUT TABLE-'].update("")
+            if event == 'Add Input':
+                input_lsit.append((values['-INPUT TABLE-'], values['-INPUT FIELD-']))
+                input_count += 1
+                window['-INPUT FIELD-'].update("")
+                window['-INPUT TABLE-'].update("")
+                window['-TEXT NUM INPUTS-'].update(f'Number of inputs: {input_count}')
+                
+
+
     def get_table_info(self, table_name):
         '''
             This function helps the user see the data base table info
