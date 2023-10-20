@@ -142,8 +142,8 @@ class systemEmuo(threadWrapper):
                 self.__window["-FILE LIST-"].update(fnames)
             elif event == "-FILE LIST-":  # A file was chosen from the listbox
                 try:
-                    input_table, output_field, out_field_type, input_field = self.mapping_windows()
-                    self.__coms.send_request('Matlab Disbatcher', ['add_mapping', values["-FILE LIST-"][0].replace(".m",''), input_table, output_field, input_field, ('list' in out_field_type)]) #create the mapping in the dispacher, the last arg just checks to see if it is a list type
+                    input_table, output_field, out_field_type = self.mapping_windows()
+                    self.__coms.send_request('Matlab Disbatcher', ['add_mapping', values["-FILE LIST-"][0].replace(".m",''), input_table, output_field, ('list' in out_field_type)]) #create the mapping in the dispacher, the last arg just checks to see if it is a list type
                     try:
                         self.__coms.send_request('Matlab Disbatcher', ['add_field_mapping', values["-FILE LIST-"][0].replace(".m",''), output_field, out_field_type]) # create the need data base structure.
                     except Exception as error :
@@ -235,7 +235,7 @@ class systemEmuo(threadWrapper):
                     db_list = None
             if event == 'Submit':
                 window.close()
-                return values['-INPUT TABLE-'], values['-OUTPUT FIELD-'], values['-OUTPUT FIELD TYPE-'], values['-INPUT FIELD-']
+                return input_lsit, values['-OUTPUT FIELD-'], values['-OUTPUT FIELD TYPE-']
             if event == 'Cancel':
                 window['-INPUT FIELD-'].update("")
                 window['-OUTPUT FIELD-'].update("")
@@ -246,9 +246,7 @@ class systemEmuo(threadWrapper):
                 window['-INPUT FIELD-'].update("")
                 window['-INPUT TABLE-'].update("")
                 window['-TEXT NUM INPUTS-'].update(f'Number of inputs: {input_count}')
-                
-
-
+                print(input_lsit)
     def get_table_info(self, table_name):
         '''
             This function helps the user see the data base table info
@@ -328,7 +326,7 @@ class systemEmuo(threadWrapper):
         table_name = ''
         start = -1
 
-        window = sg.Window('Mapping Edditor: ', layout=layout)
+        window = sg.Window('Data base viewer: ', layout=layout)
         while True:
             event, values = window.read(timeout=20)
             if event == "Exit" or event == sg.WIN_CLOSED:
