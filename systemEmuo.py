@@ -75,7 +75,7 @@ class systemEmuo(threadWrapper):
             ]
 
         ]
-        self.__window = sg.Window("CSE Ground", self.__layout)
+        self.__window = sg.Window("CSE Ground", self.__layout, scaling=True)
     def print_old_continuos(self, message, key = '-LOGS-'):
         # pylint: disable=missing-function-docstring
         with self.__message_lock:
@@ -184,6 +184,10 @@ class systemEmuo(threadWrapper):
                 sg.Input(key='-INPUT FIELD-', enable_events=True)
             ],
             [
+                sg.Text(f'Number of inputs: {0}', key='-TEXT NUM INPUTS-'),
+                sg.Button('Add Input'),
+            ],
+            [
                 sg.Text('Output field (Exsisting, or New field)', size= (10,5)), 
                 sg.Input(key='-OUTPUT FIELD-', enable_events=True),
             ],
@@ -197,12 +201,8 @@ class systemEmuo(threadWrapper):
         ]
         button_dispaly = [
             [
-                sg.Button('Submit'),
-                sg.Button('Cancel'),
-                [
-                    sg.Text(f'Number of inputs: {0}', key='-TEXT NUM INPUTS-'),
-                    sg.Button('Add Input'),
-                ]
+                sg.Button('Submit (Add output)'),
+                sg.Button('Cancel')
             ]
         ]
 
@@ -233,7 +233,7 @@ class systemEmuo(threadWrapper):
                     window['-DATABASE FEILDS-'].update(db_list)
                     #reset for next pass now
                     db_list = None
-            if event == 'Submit':
+            if event == 'Submit (Add output)':
                 window.close()
                 return input_lsit, values['-OUTPUT FIELD-'], values['-OUTPUT FIELD TYPE-']
             if event == 'Cancel':
