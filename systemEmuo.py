@@ -142,10 +142,10 @@ class systemEmuo(threadWrapper):
                 self.__window["-FILE LIST-"].update(fnames)
             elif event == "-FILE LIST-":  # A file was chosen from the listbox
                 try:
-                    input_table, output_field, out_field_type = self.mapping_windows()
-                    self.__coms.send_request('Matlab Disbatcher', ['add_mapping', values["-FILE LIST-"][0].replace(".m",''), input_table, output_field, ('list' in out_field_type)]) #create the mapping in the dispacher, the last arg just checks to see if it is a list type
+                    input_table, out_put_dict = self.mapping_windows()
+                    self.__coms.send_request('Matlab Disbatcher', ['add_mapping', values["-FILE LIST-"][0].replace(".m",''), input_table, out_put_dict]) #create the mapping in the dispacher, the last arg just checks to see if it is a list type
                     try:
-                        self.__coms.send_request('Matlab Disbatcher', ['add_field_mapping', values["-FILE LIST-"][0].replace(".m",''), output_field, out_field_type]) # create the need data base structure.
+                        self.__coms.send_request('Data Base', ['create_table_external', out_put_dict]) # create the need data base structure.
                     except Exception as error :
                         self.__coms.print_message(f"Failed to create matlab mapping: {error}")
                     self.__mat_lab_code_requst_num = -1 #if everything goes right, we need to signal to the db display to update.
@@ -188,20 +188,29 @@ class systemEmuo(threadWrapper):
                 sg.Button('Add Input'),
             ],
             [
-                sg.Text('Output field (Exsisting, or New field)', size= (10,5)), 
+                sg.Text('Output table (New table)', size= (10,5)), 
+                sg.Input(key='-OUTPUT TABLE-', enable_events=True),
+            ],
+            [
+                sg.Text(f'Number of output tables: {0}', key='-TEXT NUM OUTPUTS TABLES-'),
+                sg.Button('Add output table'),
+            ],
+            [
+                sg.Text('Output field (New field)', size= (10,5)), 
                 sg.Input(key='-OUTPUT FIELD-', enable_events=True),
             ],
             [
-                sg.Text('Output field type (int(64), float(64), string, bool, bigint, or list <type>'),
+                sg.Text('Output field type (int(64), float(64), string, bool, bigint'),
                 sg.Input(key='-OUTPUT FIELD TYPE-', enable_events=True),
             ],
             [
-                sg.Text('If you use list type, it will create a table that has two columns, one for the index, one for the return value of the defined type.')
-            ],
+                sg.Text(f'Number of output feilds: {0}', key='-TEXT NUM OUTPUTS-'),
+                sg.Button('Add output feild'),
+            ]
         ]
         button_dispaly = [
             [
-                sg.Button('Submit (Add output)'),
+                sg.Button('Submit'),
                 sg.Button('Cancel')
             ]
         ]
@@ -216,7 +225,10 @@ class systemEmuo(threadWrapper):
         request_num = -1
         db_list = None
         input_lsit = []
+        output_dict = {} #dictinarl one key per table, then each key maps to a list of input vals.  
         input_count = 0
+        output_feild_cout = 0
+        output_table_cout = 0
 
         while (True):
             event, values = window.read(timeout=20)
@@ -233,20 +245,42 @@ class systemEmuo(threadWrapper):
                     window['-DATABASE FEILDS-'].update(db_list)
                     #reset for next pass now
                     db_list = None
-            if event == 'Submit (Add output)':
-                window.close()
-                return input_lsit, values['-OUTPUT FIELD-'], values['-OUTPUT FIELD TYPE-']
+            if event == 'Submit':
+                if input_count == 0:
+                    sg.popup("No inputs added!!!")
+                elif output_table_cout ==- 0:
+                    sg.popup("No output tables added!!!")
+                elif output_feild_cout == 0:
+                    sg.popup("No output feilds added!!!")
+                else :
+                    window.close()
+                    return input_lsit, output_dict
             if event == 'Cancel':
                 window['-INPUT FIELD-'].update("")
                 window['-OUTPUT FIELD-'].update("")
                 window['-INPUT TABLE-'].update("")
             if event == 'Add Input':
-                input_lsit.append((values['-INPUT TABLE-'], values['-INPUT FIELD-']))
-                input_count += 1
-                window['-INPUT FIELD-'].update("")
-                window['-INPUT TABLE-'].update("")
-                window['-TEXT NUM INPUTS-'].update(f'Number of inputs: {input_count}')
-                print(input_lsit)
+                if(values['-INPUT TABLE-'] != '') and (values['-INPUT FIELD-'] != ''):
+                    input_lsit.append((values['-INPUT TABLE-'], values['-INPUT FIELD-']))
+                    input_count += 1
+                    window['-INPUT FIELD-'].update("")
+                    window['-INPUT TABLE-'].update("")
+                    window['-TEXT NUM INPUTS-'].update(f'Number of inputs: {input_count}')
+            if event == 'Add output feild':
+                try: 
+                    if (values['-OUTPUT FIELD-'] != '') and (values['-OUTPUT FIELD TYPE-'] != ''):
+                        output_dict[values['-OUTPUT TABLE-']].append((values['-OUTPUT FIELD-'], values['-OUTPUT FIELD TYPE-']))
+                        output_feild_cout += 1
+                        window['-OUTPUT FIELD-'].update("")
+                        window['-OUTPUT FIELD TYPE-'].update("")
+                        window['-TEXT NUM OUTPUTS-'].update(f'Number of output feilds:  {output_feild_cout}')
+                except :
+                    sg.popup("Invaild table")
+            if event == 'Add output table':
+                if values['-OUTPUT TABLE-'] != '':
+                    output_dict[values['-OUTPUT TABLE-']] = []
+                    output_table_cout += 1
+                    window['-TEXT NUM OUTPUTS TABLES-'].update(f'Number of output tables:  {output_table_cout}')
     def get_table_info(self, table_name):
         '''
             This function helps the user see the data base table info
