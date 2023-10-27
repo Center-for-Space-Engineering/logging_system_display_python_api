@@ -192,6 +192,11 @@ class systemEmuo(threadWrapper):
                 sg.Input(key='-OUTPUT TABLE-', enable_events=True),
             ],
             [
+                sg.Text(f'Name of idex feild (Optional): '),
+                sg.Input(key='-TEXT FEILD IDX-', enable_events=True),
+
+            ],
+            [
                 sg.Text(f'Number of output tables: {0}', key='-TEXT NUM OUTPUTS TABLES-'),
                 sg.Button('Add output table'),
             ],
@@ -206,7 +211,7 @@ class systemEmuo(threadWrapper):
             [
                 sg.Text(f'Number of output feilds: {0}', key='-TEXT NUM OUTPUTS-'),
                 sg.Button('Add output feild'),
-            ]
+            ],
         ]
         button_dispaly = [
             [
@@ -278,7 +283,7 @@ class systemEmuo(threadWrapper):
                     sg.popup("Invaild table")
             if event == 'Add output table':
                 if values['-OUTPUT TABLE-'] != '':
-                    output_dict[values['-OUTPUT TABLE-']] = []
+                    output_dict[values['-OUTPUT TABLE-']] = [('input_idx_db', values['-TEXT FEILD IDX-'])]
                     output_table_cout += 1
                     window['-TEXT NUM OUTPUTS TABLES-'].update(f'Number of output tables:  {output_table_cout}')
     def get_table_info(self, table_name):
