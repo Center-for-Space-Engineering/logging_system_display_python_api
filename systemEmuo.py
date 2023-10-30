@@ -22,8 +22,10 @@ class systemEmuo(threadWrapper):
         self.__message_lock = threading.Lock()
         self.__coms = coms
         self.__mat_lab_code_requst_num = -1
+        self.__mat_lab_folder_requst_num = -1
         self.__fields_request_num = -1
         self.__avaible_matlab = None
+        self.__avaible_matlab_folders = None
         self.__message_map = {
             '-PRELOGS-' : [],
             '-THREADS-' : [],
@@ -34,6 +36,7 @@ class systemEmuo(threadWrapper):
             sg.Text("Find MatLab code:"),
             sg.In(size=(40, 1), enable_events=True, key="-FOLDER-"),
             sg.FolderBrowse(),
+            sg.Button('Add folder to Matlab Path.', key='-ADD PATH-')
             ],
             [
                 sg.Listbox(
@@ -57,6 +60,10 @@ class systemEmuo(threadWrapper):
         self.__processing_flow_viewer =[
             [sg.Listbox(size=(160, 10), enable_events=True,  key="-PROCESS-", values=[])],
         ]
+
+        self.__file_viewer =[
+            [sg.Listbox(size=(160, 10), enable_events=True,  key="-FILE_PATHS-", values=[])],
+        ]
         
         # ----- Full layout -----
         self.__layout = [
@@ -65,6 +72,9 @@ class systemEmuo(threadWrapper):
                     sg.Column(self.__file_list_column, element_justification='t'),
                     sg.VSeperator(),
                     sg.Column(self.__logs_viewer_column),
+                ],
+                [
+                    sg.Frame("Matlab folder paths", self.__file_viewer, title_color='blue', key="-FILE_PATHS-"),                    
                 ],
                 [
                     sg.Frame("Processing Flow", self.__processing_flow_viewer, title_color='blue', key="-PROCESS-"),
@@ -111,6 +121,18 @@ class systemEmuo(threadWrapper):
                     self.__window['-PROCESS-'].update(self.__avaible_matlab[1])
                     #reset for next pass now
                     self.__avaible_matlab = None
+
+                #get the active matlab folders
+                if self.__mat_lab_folder_requst_num == -1: 
+                    self.__mat_lab_folder_requst_num  = self.__coms.send_request('Matlab Disbatcher', ['get_matlab_file_paths'])
+                else : #if we have check to see if there is a return value
+                    self.__avaible_matlab_folders = self.__coms.get_return('Matlab Disbatcher', self.__mat_lab_folder_requst_num)
+                if self.__avaible_matlab_folders is not None: 
+                    # if the return time is not none then we update the code
+                    self.__window['-FILE_PATHS-'].update(self.__avaible_matlab_folders)
+                    #reset for next pass now
+                    self.__avaible_matlab_folders = None
+                    self.__mat_lab_folder_requst_num = -1
                 
                 #get db feilds list
                 db_list = None
@@ -158,6 +180,10 @@ class systemEmuo(threadWrapper):
                 self.get_table_info(values['-DATABASE FEILDS-'][0])
             elif event == '-GET DATA-':
                 self.get_data()
+            elif event == '-ADD PATH-':
+                # print(values["-FOLDER-"])
+                self.__coms.send_request('Matlab Disbatcher', ['add_folder_path', values["-FOLDER-"]])
+
 
         super().set_status("Complete")
         self.__window.close()
