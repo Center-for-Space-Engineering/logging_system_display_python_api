@@ -31,6 +31,8 @@ class systemEmuo(threadWrapper):
             '-THREADS-' : [],
             '-LOGS-' : [],
         }
+        self.__message_map_matlab_thread_report = {}
+        self.__save_report = ['No save in progress', 0]
         self.__file_list_column = [
             [
             sg.Text("Find MatLab code:"),
@@ -414,3 +416,70 @@ class systemEmuo(threadWrapper):
                 window['-INFO DISPALY-'].update(db_list)
                 request_num = -1
                 db_list = None
+    def make_matlab_thread_report(self, args):
+        '''
+            This funciton creats a report for the thread
+
+            Input :
+                args[0] : thread name
+                args[1] : status
+        '''
+        self.__message_map_matlab_thread_report[args[0]] = args[1]
+    def make_save_report(self, args):
+        '''
+            this function is how the db class reports on how much data it is saving.
+
+            Inputs:
+                args[0] : Data group being saved
+                args[1] : (current row / total rows) * 100 (precent of data saved.)
+        '''
+        self.__save_report = [args[0], args[1]]
+    def matlab_threading_report_disp(self):
+        '''
+            This function displays the matlab threading report disp
+        '''
+        #build gui 
+        thread_disp = []
+
+        for thread_name  in self.__message_map_matlab_thread_report:
+            thread_disp.append([sg.Text(text = (thread_name + ":" + self.__message_map_matlab_thread_report[thread_name]), key=thread_name)])
+
+        layout = [
+            [threadWrapper],
+            [
+                sg.Text('Data base saving progress'),
+                sg.ProgressBar(100, orientation='h', expand_x=True, size=(20, 20),  key='-PBAR-'),
+                sg.Text('Data from thread: ', key='-THREAD SAVE-')
+            ]
+        ]
+
+        window = sg.Window('Thread reporter: ', layout=layout, scaling=True)
+        requests_ids = []
+        while (True):
+            event, values = window.read(timeout=20)
+            if event == "Exit" or event == sg.WIN_CLOSED:
+                self.__save_report = ['No save in progress', 0]
+                return
+            else :
+                #update thread reports
+                for thread_name in self.__message_map:
+                    requests_ids.append(self.__coms.send_request([thread_name,'get_status']), thread_name, False)
+                done = False
+                while(not done):
+                    done = True # set done to true everytime to make our check at the end work
+                    idx = 0 #reset index to zero.
+                    for request in requests_ids:
+                        current_check = self.__coms.check_request('Data Base', request[0])
+                        if(current_check):#remeber that we added the request in order, so we can index the input_table by keeping track of where we are in the request list
+                            data = self.__coms.get_return('Data Base', request[0]) #collect data for completed request to data base.
+                            window.update[request[1]] = data
+                            requests_ids[idx][2] = True#after we have collected and added all the data mark the request as complete.
+                        done = (done and requests_ids[idx][2]) # we AND all the request together so that why when they are all done we drop out of the loop.
+                        idx += 1 #incrament the idx
+                requests_ids.clear()
+                #update progress bar
+                window.update['-THREAD SAVE-'] = self.__save_report[0]
+                window.update["-PBAR-"] = self.__save_report[1]
+            
+
+        
