@@ -31,7 +31,6 @@ class systemEmuo(threadWrapper):
             '-THREADS-' : [],
             '-LOGS-' : [],
         }
-        self.__message_map_matlab_thread_report = {}
         self.__save_report = ['No save in progress', 0]
         self.__file_list_column = [
             [
@@ -108,47 +107,7 @@ class systemEmuo(threadWrapper):
             if event == "Exit" or event == sg.WIN_CLOSED: #pylint: disable=R1714
                 break
             if event == sg.TIMEOUT_EVENT:
-                with self.__message_lock:
-                    for item in self.__message_map: #pylint: disable=C0206
-                        self.__window[item].update(self.__message_map[item])
-                #dont need mutex locking here because this thread is the onlything that can touch this internal data
-                #check to see if we have sent the request
-                if self.__mat_lab_code_requst_num == -1: 
-                    self.__mat_lab_code_requst_num  = self.__coms.send_request('Matlab Disbatcher', ['get_mappings_list'])
-                else : #if we have check to see if there is a return value
-                    self.__avaible_matlab = self.__coms.get_return('Matlab Disbatcher', self.__mat_lab_code_requst_num)
-                if self.__avaible_matlab is not None: 
-                    # if the return time is not none then we update the code
-                    self.__window['-MATCODE-'].update(self.__avaible_matlab[0])
-                    self.__window['-PROCESS-'].update(self.__avaible_matlab[1])
-                    #reset for next pass now
-                    self.__avaible_matlab = None
-
-                #get the active matlab folders
-                if self.__mat_lab_folder_requst_num == -1: 
-                    self.__mat_lab_folder_requst_num  = self.__coms.send_request('Matlab Disbatcher', ['get_matlab_file_paths'])
-                else : #if we have check to see if there is a return value
-                    self.__avaible_matlab_folders = self.__coms.get_return('Matlab Disbatcher', self.__mat_lab_folder_requst_num)
-                if self.__avaible_matlab_folders is not None: 
-                    # if the return time is not none then we update the code
-                    self.__window['-FILE_PATHS-'].update(self.__avaible_matlab_folders)
-                    #reset for next pass now
-                    self.__avaible_matlab_folders = None
-                    self.__mat_lab_folder_requst_num = -1
-                
-                #get db feilds list
-                db_list = None
-                if self.__fields_request_num == -1:
-                    self.__fields_request_num  = self.__coms.send_request('Data Base', ['get_tables_str_list'])
-                else : #if we have check to see if there is a return value
-                    db_list = self.__coms.get_return('Data Base', self.__fields_request_num)
-                if db_list is not None: 
-                    # if the return time is not none then we update the code
-                    self.__window['-DATABASE FEILDS-'].update(db_list)
-                    #reset for next pass now
-                    db_list = None
-                    self.__fields_request_num = -1
-
+                self.up_date_disp()
             # Folder name was filled in, make a list of files in the folder
             if event == "-FOLDER-":
                 folder = values["-FOLDER-"]
@@ -178,15 +137,21 @@ class systemEmuo(threadWrapper):
             elif event == "-MATCODE-":
                 func = values["-MATCODE-"][0]
                 self.__mat_lab_code_requst_num  = self.__coms.send_request('Matlab Disbatcher', ['dispatch_fucntion', func])
+                self.matlab_threading_report_disp()
             elif event == '-DATABASE FEILDS-':
                 self.get_table_info(values['-DATABASE FEILDS-'][0])
             elif event == '-GET DATA-':
                 self.get_data()
             elif event == '-ADD PATH-':
-                # print(values["-FOLDER-"])
                 self.__coms.send_request('Matlab Disbatcher', ['add_folder_path', values["-FOLDER-"]])
-
-
+            else : #if nothing else to do run any task request
+                if super().get_running():
+                    request = super().get_next_request()
+                    # check to see if there is a request
+                    if(request != None):
+                        if(len(request[1]) > 0): request[3] = eval("self." + request[0])(request[1])
+                        else : request[3] = eval("self." + request[0])()
+                        super().complet_request(request[4], request[3])
         super().set_status("Complete")
         self.__window.close()
     def mapping_windows(self):
@@ -416,15 +381,6 @@ class systemEmuo(threadWrapper):
                 window['-INFO DISPALY-'].update(db_list)
                 request_num = -1
                 db_list = None
-    def make_matlab_thread_report(self, args):
-        '''
-            This funciton creats a report for the thread
-
-            Input :
-                args[0] : thread name
-                args[1] : status
-        '''
-        self.__message_map_matlab_thread_report[args[0]] = args[1]
     def make_save_report(self, args):
         '''
             this function is how the db class reports on how much data it is saving.
@@ -439,47 +395,102 @@ class systemEmuo(threadWrapper):
             This function displays the matlab threading report disp
         '''
         #build gui 
+        toprow = ['Thread report']
         thread_disp = []
 
-        for thread_name  in self.__message_map_matlab_thread_report:
-            thread_disp.append([sg.Text(text = (thread_name + ":" + self.__message_map_matlab_thread_report[thread_name]), key=thread_name)])
+        with self.__message_lock:
+            temp_messge = self.__message_map['-THREADS-']
+
+        for message  in temp_messge:
+            thread_disp.append([message.replace(' ', '')])
+
+        tbl1 = sg.Table(values=thread_disp, headings=toprow,
+                auto_size_columns=True,
+                display_row_numbers=False,
+                justification='left', key='-TABLE-',
+                selected_row_colors='blue on black',
+                enable_events=True,
+                expand_x=True,
+                expand_y=True,
+                enable_click_events=True, 
+                size=(150, 40),
+        )
 
         layout = [
-            [threadWrapper],
+            [tbl1],
+            [sg.VSeperator()],
             [
                 sg.Text('Data base saving progress'),
-                sg.ProgressBar(100, orientation='h', expand_x=True, size=(20, 20),  key='-PBAR-'),
-                sg.Text('Data from thread: ', key='-THREAD SAVE-')
-            ]
+                sg.ProgressBar(100, orientation='h', expand_x=True, size=(100, 20),  key='-PBAR-'),
+            ],
+            [
+                sg.Text('Data from thread: ', key='-THREAD SAVE-'),
+            ],
         ]
 
         window = sg.Window('Thread reporter: ', layout=layout, scaling=True)
         requests_ids = []
+        
         while (True):
             event, values = window.read(timeout=20)
             if event == "Exit" or event == sg.WIN_CLOSED:
                 self.__save_report = ['No save in progress', 0]
+                window.close()
                 return
             else :
+                self.up_date_disp() #update main display
                 #update thread reports
-                for thread_name in self.__message_map:
-                    requests_ids.append(self.__coms.send_request([thread_name,'get_status']), thread_name, False)
-                done = False
-                while(not done):
-                    done = True # set done to true everytime to make our check at the end work
-                    idx = 0 #reset index to zero.
-                    for request in requests_ids:
-                        current_check = self.__coms.check_request('Data Base', request[0])
-                        if(current_check):#remeber that we added the request in order, so we can index the input_table by keeping track of where we are in the request list
-                            data = self.__coms.get_return('Data Base', request[0]) #collect data for completed request to data base.
-                            window.update[request[1]] = data
-                            requests_ids[idx][2] = True#after we have collected and added all the data mark the request as complete.
-                        done = (done and requests_ids[idx][2]) # we AND all the request together so that why when they are all done we drop out of the loop.
-                        idx += 1 #incrament the idx
-                requests_ids.clear()
+                thread_disp = []
+                for message  in temp_messge:
+                    thread_disp.append([message])
+                window['-TABLE-'].update(values = thread_disp)
                 #update progress bar
-                window.update['-THREAD SAVE-'] = self.__save_report[0]
-                window.update["-PBAR-"] = self.__save_report[1]
-            
-
-        
+                window['-THREAD SAVE-'].update("Saving data on thread: " + str(self.__save_report[0]))
+                window["-PBAR-"].update(current_count = self.__save_report[1])
+                if super().get_running():
+                    request = super().get_next_request()
+                    # check to see if there is a request
+                    if(request != None):
+                        if(len(request[1]) > 0): request[3] = eval("self." + request[0])(request[1])
+                        else : request[3] = eval("self." + request[0])()
+                        super().complet_request(request[4], request[3])
+    def up_date_disp(self):
+        with self.__message_lock:
+            message_temp = self.__message_map
+        for item in message_temp: #pylint: disable=C0206
+            self.__window[item].update(message_temp[item])
+        #dont need mutex locking here because this thread is the onlything that can touch this internal data
+        #check to see if we have sent the request
+        if self.__mat_lab_code_requst_num == -1: 
+            self.__mat_lab_code_requst_num  = self.__coms.send_request('Matlab Disbatcher', ['get_mappings_list'])
+        else : #if we have check to see if there is a return value
+            self.__avaible_matlab = self.__coms.get_return('Matlab Disbatcher', self.__mat_lab_code_requst_num)
+        if self.__avaible_matlab is not None: 
+            # if the return time is not none then we update the code
+            self.__window['-MATCODE-'].update(self.__avaible_matlab[0])
+            self.__window['-PROCESS-'].update(self.__avaible_matlab[1])
+            #reset for next pass now
+            self.__avaible_matlab = None
+        #get the active matlab folders
+        if self.__mat_lab_folder_requst_num == -1: 
+            self.__mat_lab_folder_requst_num  = self.__coms.send_request('Matlab Disbatcher', ['get_matlab_file_paths'])
+        else : #if we have check to see if there is a return value
+            self.__avaible_matlab_folders = self.__coms.get_return('Matlab Disbatcher', self.__mat_lab_folder_requst_num)
+        if self.__avaible_matlab_folders is not None: 
+            # if the return time is not none then we update the code
+            self.__window['-FILE_PATHS-'].update(self.__avaible_matlab_folders)
+            #reset for next pass now
+            self.__avaible_matlab_folders = None
+            self.__mat_lab_folder_requst_num = -1
+        #get db feilds list
+        db_list = None
+        if self.__fields_request_num == -1:
+            self.__fields_request_num  = self.__coms.send_request('Data Base', ['get_tables_str_list'])
+        else : #if we have check to see if there is a return value
+            db_list = self.__coms.get_return('Data Base', self.__fields_request_num)
+        if db_list is not None: 
+            # if the return time is not none then we update the code
+            self.__window['-DATABASE FEILDS-'].update(db_list)
+            #reset for next pass now
+            db_list = None
+            self.__fields_request_num = -1
