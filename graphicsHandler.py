@@ -37,6 +37,7 @@ class graphicsHandler(sys):
         self.__byte_div = byte_div
         self.__messages_prement = []
         self.__coms = coms
+        self.__status_message = {}
         super().__init__(self.__coms)
 
     def write_message_log(self):
@@ -97,3 +98,14 @@ class graphicsHandler(sys):
         self.__byte_report.append(colored(f"Bytes received at: [{datetime.datetime.now()}]", 'light_blue') + " |" + colored((u'\u25a0' * numbytes) + f"({bytesOriganal})", 'magenta'))
         if len(self.__byte_report) >= self.__byte_disp : # this basically makes it a FIFO queue for messaging
             self.__byte_report.remove(self.__byte_report[0])
+
+    def report_additional_status(self, thread_name, message):
+        # pylint: disable=missing-function-docstring
+        self.__status_message[thread_name] = message
+    
+    def disp_additional_status(self):
+        # pylint: disable=missing-function-docstring
+        super().print_old_continuos(colored('Status report: ',self.__colors[3]) + "\t", delay=0, end = '\n')
+        for thread_name in self.__status_message:
+            super().print_old_continuos(colored(f'Report: {thread_name}', 'magenta') + self.__status_message[thread_name], delay=0, end='\n')
+        print()

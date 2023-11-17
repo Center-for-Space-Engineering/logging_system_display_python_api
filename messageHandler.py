@@ -33,6 +33,7 @@ class messageHandler(threadWrapper):
         self.__graphics = graphicsHandler(coms=self)
         self.__graphics_lock = threading.Lock()
         self.__thread_handler_lock = threading.Lock()
+        self.__status_lock = threading.Lock()
         self.__thread_handler = None
 
     def set_thread_handler(self, threadHandler):
@@ -77,6 +78,12 @@ class messageHandler(threadWrapper):
         # pylint: disable=missing-function-docstring
         with self.__graphics_lock :
             self.__graphics.clear()
+    def report_additional_status(self, thread_name, messgae):
+        with self.__status_lock :
+            self.__graphics.report_additional_status(thread_name, messgae)
+    def flush_status(self):
+        with self.__status_lock :
+            self.__graphics.disp_additional_status()
 
     def run(self, refresh = 0.5): 
         '''
@@ -88,6 +95,7 @@ class messageHandler(threadWrapper):
         while (super().get_running()):
             self.clear_disp()
             self.flush_prem()
+            self.flush_status()
             self.flush_thread_report()
             self.flush()
             self.flush_bytes()
