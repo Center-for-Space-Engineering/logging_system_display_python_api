@@ -99,7 +99,7 @@ class messageHandler(threadWrapper):
             self.flush_thread_report()
             self.flush()
             self.flush_bytes()
-            time.sleep(refresh)    
+            time.sleep(refresh) 
 
     def get_system_emuo(self):
         # pylint: disable=missing-function-docstring
