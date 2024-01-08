@@ -29,7 +29,26 @@ class messageHandler(threadWrapper):
                   If a class is requesting information, or send indrect reqests (A.K.A process this when you have time) it should go through this class.
     '''
     def __init__(self):
-        super().__init__()
+        self.__func_dict = {
+            'set_thread_handler' : self.set_thread_handler,
+            'send_message_prement' : self.send_message_prement,
+            'print_message' : self.print_message,
+            'report_thread' : self.report_thread,
+            'report_bytes' : self.report_bytes,
+            'flush' : self.flush,
+            'flush_prem' : self.flush_prem,
+            'flush_thread_report' : self.flush_thread_report,
+            'flush_bytes' : self.flush_bytes,
+            'clear_disp' : self.clear_disp,
+            'report_additional_status' : self.clear_disp,
+            'report_additional_status' : self.report_additional_status,
+            'flush_status' : self.flush_status,
+            'run' : self.run,
+            'get_system_emuo' : self.get_system_emuo,
+            'send_request' : self.send_request,
+            'get_return' : self.get_return
+        }
+        super().__init__(self.__func_dict)
         self.__graphics = graphicsHandler(coms=self)
         self.__graphics_lock = threading.Lock()
         self.__thread_handler_lock = threading.Lock()
@@ -57,7 +76,6 @@ class messageHandler(threadWrapper):
         # pylint: disable=missing-function-docstring
         with self.__graphics_lock :
             self.__graphics.report_byte(byteCount)
-
     def flush(self):
         # pylint: disable=missing-function-docstring
         with self.__graphics_lock :
@@ -84,7 +102,6 @@ class messageHandler(threadWrapper):
     def flush_status(self):
         with self.__status_lock :
             self.__graphics.disp_additional_status()
-
     def run(self, refresh = 0.5): 
         '''
             This function prints thins in the order we want to see them to the screen.
@@ -99,12 +116,10 @@ class messageHandler(threadWrapper):
             self.flush_thread_report()
             self.flush()
             self.flush_bytes()
-            time.sleep(refresh) 
-
+            time.sleep(refresh)
     def get_system_emuo(self):
         # pylint: disable=missing-function-docstring
-        return self.__graphics
-    
+        return self.__graphics    
     def send_request(self, thread, request):
         '''
             This function is ment to pass information to other threads with out the two threads knowing about each other.
@@ -124,7 +139,6 @@ class messageHandler(threadWrapper):
         with self.__thread_handler_lock:
             temp = self.__thread_handler.pass_request(thread, request)
         return temp
-    
     def get_return(self, thread, requestNum):
         '''
             This function is ment to pass the return values form a thread to another thread, without the threads having explicit knowlage of eachother. 
