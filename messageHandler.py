@@ -28,7 +28,7 @@ class messageHandler(threadWrapper):
             RULE: IF a class is directly controling another class (A.K.A Do this thing now), do not use the coms class for sending request.
                   If a class is requesting information, or send indrect reqests (A.K.A process this when you have time) it should go through this class.
     '''
-    def __init__(self):
+    def __init__(self, DEBUG = True, server_name = ''):
         self.__func_dict = {
             'set_thread_handler' : self.set_thread_handler,
             'send_message_prement' : self.send_message_prement,
@@ -49,11 +49,13 @@ class messageHandler(threadWrapper):
             'get_return' : self.get_return
         }
         super().__init__(self.__func_dict)
-        self.__graphics = graphicsHandler(coms=self)
+        self.__server_name = server_name
+        self.__graphics = graphicsHandler(coms=self, server_name=self.__server_name)
         self.__graphics_lock = threading.Lock()
         self.__thread_handler_lock = threading.Lock()
         self.__status_lock = threading.Lock()
         self.__thread_handler = None
+        self.__DEBUG = DEBUG
 
     def set_thread_handler(self, threadHandler):
         '''
@@ -110,13 +112,20 @@ class messageHandler(threadWrapper):
         '''
         super().set_status("Running")
         while (super().get_running()):
-            self.clear_disp()
-            self.flush_prem()
-            self.flush_status()
-            self.flush_thread_report()
-            self.flush()
-            self.flush_bytes()
-            time.sleep(refresh)
+            if not self.__DEBUG:
+                self.clear_disp()
+                self.flush_prem()
+                self.flush_status()
+                self.flush_thread_report()
+                self.flush()
+                self.flush_bytes()
+                time.sleep(refresh)
+            else :
+
+                self.flush()
+                time.sleep(refresh)
+
+                pass
     def get_system_emuo(self):
         # pylint: disable=missing-function-docstring
         return self.__graphics    

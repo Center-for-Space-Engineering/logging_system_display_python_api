@@ -26,7 +26,7 @@ class graphicsHandler(sys):
         8  : 'light_magenta' : Command Mapped
         9  : 'light_blue' : reserved
     '''
-    def __init__(self, mesDisp = 10, byte_disp = 10, byte_div = 100, coms = None):
+    def __init__(self, mesDisp = 10, byte_disp = 10, byte_div = 100, coms = None, server_name = ''):
         self.__colors = ['red', 'magenta', 'blue', 'green', 'cyan', 'yellow', 'light_cyan', 'white', 'light_magenta', 'light_blue']
         self.__types = ['Error: ', 'Warning: ', 'Log: ', 'Get request: ', 'Data type found: ', 'Sensor connected: ', 'Thread created: ', 'Info: ', 'Command Mapped: ', 'reserved: ']
         self.__messages = [(2, colored(f"[{datetime.datetime.now()}]", 'light_blue') + '\tGraphics handler started')]
@@ -38,13 +38,17 @@ class graphicsHandler(sys):
         self.__messages_prement = []
         self.__coms = coms
         self.__status_message = {}
+        self.__server_name = server_name
         super().__init__(self.__coms)
 
     def write_message_log(self):
         # pylint: disable=missing-function-docstring
-        super().print_old_continuos(colored('Loggs report: ',self.__colors[3]) + "\t", delay=0, end = '\n')
+        # super().print_old_continuos(colored('Loggs report: ',self.__colors[3]) + "\t", delay=0, end = '\n')
+        messages = ['Logging Report:\n']
         for num in self.__messages:
-            super().print_old_continuos(colored(self.__types[num[0]],self.__colors[num[0]]) + num[1], delay=0, end='\n')
+            # super().print_old_continuos(colored(self.__types[num[0]],self.__colors[num[0]]) + num[1], delay=0, end='\n')
+            messages.append(num[1])
+        self.__coms.send_request(self.__server_name, ['write_message_log', messages]) #send the server the info to display
         print()
 
     def send_message(self, num, message):
