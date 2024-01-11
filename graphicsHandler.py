@@ -49,7 +49,7 @@ class graphicsHandler(sys):
             # super().print_old_continuos(colored(self.__types[num[0]],self.__colors[num[0]]) + num[1], delay=0, end='\n')
             messages.append(num[1])
         self.__coms.send_request(self.__server_name, ['write_message_log', messages]) #send the server the info to display
-        print()
+        # print()
 
     def send_message(self, num, message):
         # pylint: disable=missing-function-docstring
