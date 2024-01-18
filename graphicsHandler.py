@@ -122,6 +122,6 @@ class graphicsHandler(sys):
         # pylint: disable=missing-function-docstring
         super().print_old_continuos(colored('Status report: ',self.__colors[3]) + "\t", delay=0, end = '\n')
         for thread_name in self.__status_message:
-            super().print_old_continuos(colored(f'Report: {thread_name}', 'magenta') + str(self.__status_message[thread_name]), delay=0, end='\n')
+            super().print_old_continuos(colored(f'Report: {thread_name}', 'magenta') + self.__status_message[thread_name], delay=0, end='\n')
         self.__coms.send_request(self.__server_name, ['report_status', self.__status_message]) #send the server the info to display
         super().print_old_continuos("\n")
