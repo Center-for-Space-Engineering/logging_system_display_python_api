@@ -10,9 +10,10 @@ class systemEmuo:
     '''
         This systemEmuo prints things to the terminal.
     '''
-    def __init__(self, coms = None):
+    def __init__(self, coms = None, display_off =  False):
         self.__messageLock = threading.Lock()
         _ = coms
+        self.__display_off = display_off #if this is true we dont display anything
 
     def print_old_continuos(self, message, delay = 0.15, end=''):
         '''
@@ -21,6 +22,7 @@ class systemEmuo:
                 delay: add a delay between each messages
                 end: cheange the lasst thing printed on the line
         '''
+        if self.__display_off: return
         with self.__messageLock:
             print(message, end=end)
             if delay != 0:
@@ -29,6 +31,7 @@ class systemEmuo:
         '''
             clears the termal.
         '''
+        if self.__display_off: return
         with self.__messageLock:
             print("\033c", end='') #clears the terminal
             
