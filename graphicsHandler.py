@@ -77,9 +77,8 @@ class graphicsHandler(sys):
         self.__coms.send_request(self.__server_name, ['write_prem_message_log', messages]) #send the server the info to display
         super().print_old_continuos("\n")
 
-    def send_message_prement(self, num, message):
+    def send_message_prement(self, num, dto):
         # pylint: disable=missing-function-docstring
-        dto = logger_dto(time=f"{datetime.datetime.now()}", message=message)
         self.__messages_prement.append((2, dto))
     
 
@@ -125,8 +124,6 @@ class graphicsHandler(sys):
             self.__byte_report.remove(self.__byte_report[0])
             self.__byte_report_server.remove(self.__byte_report_server[0])
         self.__coms.send_request(self.__server_name, ['report_byte_status', self.__byte_report_server]) #send the server the info to display
-        
-        
 
     def report_additional_status(self, thread_name, message):
         # pylint: disable=missing-function-docstring
@@ -136,6 +133,7 @@ class graphicsHandler(sys):
         # pylint: disable=missing-function-docstring
         super().print_old_continuos(colored('Status report: ',self.__colors[3]) + "\t", delay=0, end = '\n')
         for thread_name in self.__status_message:
-            super().print_old_continuos(colored(f'Report: {thread_name}', 'magenta') + self.__status_message[thread_name], delay=0, end='\n')
+            super().print_old_continuos(colored(f'Report: {thread_name}', 'magenta') + str(self.__status_message[thread_name]), delay=0, end='\n')
+
         self.__coms.send_request(self.__server_name, ['report_status', self.__status_message]) #send the server the info to display
         super().print_old_continuos("\n")
