@@ -50,11 +50,11 @@ class messageHandler(threadWrapper):
         }
         super().__init__(self.__func_dict)
         self.__server_name = server_name
-        self.__graphics = graphicsHandler(coms=self, server_name=self.__server_name, display_off=display_off)
         self.__graphics_lock = threading.Lock()
         self.__thread_handler_lock = threading.Lock()
         self.__status_lock = threading.Lock()
         self.__thread_handler = None
+        self.__graphics = graphicsHandler(coms=self, server_name=self.__server_name, display_off=display_off)
 
     def set_thread_handler(self, threadHandler):
         '''

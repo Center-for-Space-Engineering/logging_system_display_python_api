@@ -36,6 +36,12 @@ class graphicsHandler(sys):
         self.__threaeds_status = []
         self.__messags_displayed = mesDisp
         self.__byte_report = []
+        self.__byte_report_server = [
+            {
+                'time' : datetime.datetime.now(),
+                'bytes_recived' : 0,
+            }
+        ]
         self.__byte_disp = byte_disp
         self.__byte_div = byte_div
         self.__messages_prement = []
@@ -111,8 +117,16 @@ class graphicsHandler(sys):
         bytesOriganal = numbytes
         numbytes //= self.__byte_div
         self.__byte_report.append(colored(f"Bytes received at: [{datetime.datetime.now()}]", 'light_blue') + " |" + colored((u'\u25a0' * numbytes) + f"({bytesOriganal})", 'magenta'))
+        self.__byte_report_server.append({
+            'time' : datetime.datetime.now(),
+            'bytes': numbytes
+        })
         if len(self.__byte_report) >= self.__byte_disp : # this basically makes it a FIFO queue for messaging
             self.__byte_report.remove(self.__byte_report[0])
+            self.__byte_report_server.remove(self.__byte_report_server[0])
+        self.__coms.send_request(self.__server_name, ['report_byte_status', self.__byte_report_server]) #send the server the info to display
+        
+        
 
     def report_additional_status(self, thread_name, message):
         # pylint: disable=missing-function-docstring
