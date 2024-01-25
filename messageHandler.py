@@ -28,7 +28,7 @@ class messageHandler(threadWrapper):
             RULE: IF a class is directly controling another class (A.K.A Do this thing now), do not use the coms class for sending request.
                   If a class is requesting information, or send indrect reqests (A.K.A process this when you have time) it should go through this class.
     '''
-    def __init__(self, display_off = False, server_name = ''):
+    def __init__(self, display_off = False, server_name = '', hostname='127.0.0.1'):
         self.__func_dict = {
             'set_thread_handler' : self.set_thread_handler,
             'send_message_prement' : self.send_message_prement,
@@ -50,6 +50,8 @@ class messageHandler(threadWrapper):
         }
         super().__init__(self.__func_dict)
         self.__server_name = server_name
+        self.__hostName = hostname
+        self.__hostName_lock = threading.Lock()
         self.__graphics_lock = threading.Lock()
         self.__thread_handler_lock = threading.Lock()
         self.__status_lock = threading.Lock()
@@ -150,3 +152,10 @@ class messageHandler(threadWrapper):
         with self.__thread_handler_lock:
             temp = self.__thread_handler.pass_return(thread, requestNum)
         return temp
+    def get_host_name(self):
+        '''
+            This funct returns the host name, so other classes can have acess to it. Because the server thread is too busy to be tasked with this function. 
+        '''
+        with self.__hostName_lock:
+            data = self.__hostName
+        return data
