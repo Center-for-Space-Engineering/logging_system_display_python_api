@@ -105,7 +105,7 @@ class messageHandler(threadWrapper):
     def flush_status(self):
         with self.__status_lock :
             self.__graphics.disp_additional_status()
-    def run(self, refresh = 0.5): 
+    def run(self, refresh = 1): 
         '''
             This function prints thins in the order we want to see them to the screen.
             NOTE: When debugging it is often useful to comment this function out so the screen 
