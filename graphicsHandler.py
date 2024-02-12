@@ -9,7 +9,7 @@ from logging_system_display_python_api.systemEmuo import systemEmuo as sys
 
 #import DTO for comminicating internally
 from DTOs.logger_dto import logger_dto
-from DTOs.print_message_dto import print_message_dto
+from DTOs.print_message_dto import print_message_dto #pylint: disable=w0611
 
 class graphicsHandler(sys):
     '''
@@ -72,7 +72,7 @@ class graphicsHandler(sys):
         self.__coms.send_request(self.__server_name, ['write_prem_message_log', messages]) #send the server the info to display
         super().print_old_continuos("\n")
 
-    def send_message_prement(self, num, dto):
+    def send_message_prement(self, dto):
         # pylint: disable=missing-function-docstring
         self.__messages_prement.append((2, dto))
     
@@ -86,11 +86,11 @@ class graphicsHandler(sys):
         super().print_old_continuos(colored('Thread report: ',self.__colors[3]) + "\t", delay=0, end = '\n')
         for report in self.__threaeds_status:
             if report[2] == "Running":
-                super().print_old_continuos(f"["+colored(report[1].get_time(), self.__colors[2]) + f"] Thread {report[0]}: " + colored(report[1].get_message(),self.__colors[3]) + "\t", delay=0)
+                super().print_old_continuos("["+colored(report[1].get_time(), self.__colors[2]) + f"] Thread {report[0]}: " + colored(report[1].get_message(),self.__colors[3]) + "\t", delay=0)
             elif report[2] == "Error":
                 super().print_old_continuos(colored(report[2], self.__colors[0]) + f" Thread {report[0]}: " + colored(report[1].get_message(),self.__colors[0])+ "\t", delay=0)
             else :
-                super().print_old_continuos(f"[" + colored(report[1].get_time(), self.__colors[2]) + "]\t", + f"] Thread {report[0]}: " + colored(report[1].get_message(),self.__colors[2])+ "\t", delay=0)
+                super().print_old_continuos("[" + colored(report[1].get_time(), self.__colors[2]) + "]\t", + f"] Thread {report[0]}: " + colored(report[1].get_message(),self.__colors[2])+ "\t", delay=0)
         report_copy = self.__threaeds_status.copy() #python is pass by refance so if we pass this to another thread, and then clear it, the data will be lost. So we make a copy
         self.__coms.send_request(self.__server_name, ['thread_report', report_copy]) #send the server the info to display
         if len(self.__threaeds_status) != 0:
@@ -103,14 +103,14 @@ class graphicsHandler(sys):
         super().print_old_continuos(colored('Byte report: ',self.__colors[3]) + "\t", delay=0, end = '\n')
         for  report in self.__byte_report:
             super().print_old_continuos(report, end='\n', delay=0)
-        super().print_old_continuos(colored("KEY : ", 'light_blue') + colored((u'\u25a0'), 'magenta') + f"= {self.__byte_div} bytes.", end='\n', delay=0)
+        super().print_old_continuos(colored("KEY : ", 'light_blue') + colored(('\u25a0'), 'magenta') + f"= {self.__byte_div} bytes.", end='\n', delay=0)
         super().print_old_continuos("\n")
 
     def report_byte(self, numbytes):
         # pylint: disable=missing-function-docstring
         bytesOriganal = numbytes
         numbytes //= self.__byte_div
-        self.__byte_report.append(colored(f"Bytes received at: [{datetime.datetime.now()}]", 'light_blue') + " |" + colored((u'\u25a0' * numbytes) + f"({bytesOriganal})", 'magenta'))
+        self.__byte_report.append(colored(f"Bytes received at: [{datetime.datetime.now()}]", 'light_blue') + " |" + colored(('\u25a0' * numbytes) + f"({bytesOriganal})", 'magenta'))
         self.__byte_report_server = {
             'time' : datetime.datetime.now(),
             'bytes': bytesOriganal
@@ -126,7 +126,7 @@ class graphicsHandler(sys):
     def disp_additional_status(self):
         # pylint: disable=missing-function-docstring
         super().print_old_continuos(colored('Status report: ',self.__colors[3]) + "\t", delay=0, end = '\n')
-        for thread_name in self.__status_message:
+        for thread_name in self.__status_message: #pylint: disable=c0206
             super().print_old_continuos(colored(f'Report: {thread_name}', 'magenta') + str(self.__status_message[thread_name]), delay=0, end='\n')
 
         self.__coms.send_request(self.__server_name, ['report_status', self.__status_message]) #send the server the info to display

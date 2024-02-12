@@ -22,7 +22,8 @@ class systemEmuo:
                 delay: add a delay between each messages
                 end: cheange the lasst thing printed on the line
         '''
-        if self.__display_off: return
+        if self.__display_off: 
+            return
         with self.__messageLock:
             print(message, end=end)
             if delay != 0:
@@ -31,7 +32,8 @@ class systemEmuo:
         '''
             clears the termal.
         '''
-        if self.__display_off: return
+        if self.__display_off:
+            return
         with self.__messageLock:
             print("\033c", end='') #clears the terminal
             
