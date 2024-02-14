@@ -72,7 +72,7 @@ class graphicsHandler(sys):
         self.__coms.send_request(self.__server_name, ['write_prem_message_log', messages]) #send the server the info to display
         super().print_old_continuos("\n")
 
-    def send_message_prement(self, dto):
+    def send_message_prement(self, dto, _): #the message type is not here but it might be one day so that is why it is a _
         # pylint: disable=missing-function-docstring
         self.__messages_prement.append((2, dto))
     
