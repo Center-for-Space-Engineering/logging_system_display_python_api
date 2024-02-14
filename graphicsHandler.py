@@ -89,7 +89,7 @@ class graphicsHandler(sys):
             elif report[2] == "Error":
                 super().print_old_continuos(colored(report[2], self.__colors[0]) + f" Thread {report[0]}: " + colored(report[1].get_message(),self.__colors[0])+ "\t", delay=0)
             else :
-                super().print_old_continuos("[" + colored(report[1].get_time(), self.__colors[2]) + "]\t", + f"] Thread {report[0]}: " + colored(report[1].get_message(),self.__colors[2])+ "\t", delay=0)
+                super().print_old_continuos("[" + colored(report[1].get_time(), self.__colors[2]) + "]\t" + f"] Thread {report[0]}: " + colored(report[1].get_message(),self.__colors[2])+ "\t", delay=0)
         report_copy = self.__threaeds_status.copy() #python is pass by refance so if we pass this to another thread, and then clear it, the data will be lost. So we make a copy
         self.__coms.send_request(self.__server_name, ['thread_report', report_copy]) #send the server the info to display
         if len(self.__threaeds_status) != 0:
