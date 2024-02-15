@@ -15,23 +15,23 @@ class messageHandler(threadWrapper):
     '''
         This class is the mail man of our code. Any message that needs to be sent to other threads, needs to go through here.
         This class is in charge of send info to the graphics handler (systemEmuo) witch displays it to the user.
-        It also is in charge of sending request to unknow threads. 
+        It also is in charge of sending request to unknown threads. 
         For example:
-            The systemEmuo does need to know about the matlab_disbacter, but it does want info from it. So it will send a request
+            The systemEmuo does need to know about the matlab_disaster, but it does want info from it. So it will send a request
                 through this class to get that info.
-            A data base handler should use this class, because it is handling the data base class it should have direct knowlage 
+            A data base handler should use this class, because it is handling the data base class it should have direct knowledge 
                 of the database. 
 
             It is completely possible to handle either example with or with out this class, however to maintain a clear code struct 
                 here is the rule.
 
-            RULE: IF a class is directly controling another class (A.K.A Do this thing now), do not use the coms class for sending request.
-                  If a class is requesting information, or send indrect reqests (A.K.A process this when you have time) it should go through this class.
+            RULE: IF a class is directly controlling another class (A.K.A Do this thing now), do not use the coms class for sending request.
+                  If a class is requesting information, or send indirect requests (A.K.A process this when you have time) it should go through this class.
     '''
     def __init__(self, display_off = False, server_name = '', hostname='127.0.0.1'):
         self.__func_dict = {
             'set_thread_handler' : self.set_thread_handler,
-            'send_message_prement' : self.send_message_prement,
+            'send_message_permanent' : self.send_message_permanent,
             'print_message' : self.print_message,
             'report_thread' : self.report_thread,
             'report_bytes' : self.report_bytes,
@@ -59,13 +59,13 @@ class messageHandler(threadWrapper):
 
     def set_thread_handler(self, threadHandler):
         '''
-            This fuction gives the messge handler acces to the threading interface for messages routing.
+            This function gives the message handler access to the threading interface for messages routing.
         '''
         self.__thread_handler = threadHandler
-    def send_message_prement(self, message, typeM=2):
+    def send_message_permanent(self, message, typeM=2):
         # pylint: disable=missing-function-docstring
         with self.__graphics_lock :
-            self.__graphics.send_message_prement(typeM, message)
+            self.__graphics.send_message_permanent(typeM, message)
     def print_message(self, message, typeM=2):
         # pylint: disable=missing-function-docstring
         with self.__graphics_lock :
@@ -85,7 +85,7 @@ class messageHandler(threadWrapper):
     def flush_prem(self):
         # pylint: disable=missing-function-docstring
         with self.__graphics_lock :
-            self.__graphics.write_message_prement_log()
+            self.__graphics.write_message_permanent_log()
     def flush_thread_report(self):
         # pylint: disable=missing-function-docstring
         with self.__graphics_lock :
@@ -98,10 +98,10 @@ class messageHandler(threadWrapper):
         # pylint: disable=missing-function-docstring
         with self.__graphics_lock :
             self.__graphics.clear()
-    def report_additional_status(self, thread_name, messgae):
+    def report_additional_status(self, thread_name, message):
         # pylint: disable=missing-function-docstring
         with self.__status_lock :
-            self.__graphics.report_additional_status(thread_name, messgae)
+            self.__graphics.report_additional_status(thread_name, message)
     def flush_status(self):
         # pylint: disable=missing-function-docstring
         with self.__status_lock :
@@ -110,7 +110,7 @@ class messageHandler(threadWrapper):
         '''
             This function prints thins in the order we want to see them to the screen.
             NOTE: When debugging it is often useful to comment this function out so the screen 
-                doesent get spammed.
+                doest get spammed.
         '''
         super().set_status("Running")
         while (super().get_running()):
@@ -126,9 +126,9 @@ class messageHandler(threadWrapper):
         return self.__graphics    
     def send_request(self, thread, request):
         '''
-            This function is ment to pass information to other threads with out the two threads knowing about each other.
-            Bassically the requester say I want to talk to thread x and here is my request. This funct then pass on that requeset. 
-            NOTE: threads go by the same name that you see on the display, NOT their class name. This is ment to be easier for the user,
+            This function is to pass information to other threads with out the two threads knowing about each other.
+            Basically the requester say I want to talk to thread x and here is my request. This func then pass on that request. 
+            NOTE: threads go by the same name that you see on the display, NOT their class name. This is meant to be easier for the user,
             as they could run the code and see the name they need to send a request to.
 
             ARGS: 
@@ -139,23 +139,23 @@ class messageHandler(threadWrapper):
                     EX: ['funcName']
         '''
         #NOTE: We still need a mutex lock here, even thought the taskHandler is doing locking as well, the taskHandler
-        #   pointer (self.__taskHandler) is a varible that needs to be protected.
+        #   pointer (self.__taskHandler) is a variable that needs to be protected.
         with self.__thread_handler_lock:
             temp = self.__thread_handler.pass_request(thread, request)
         return temp
     def get_return(self, thread, requestNum):
         '''
-            This function is ment to pass the return values form a thread to another thread, without the threads having explicit knowlage of eachother. 
+            This function is meant to pass the return values form a thread to another thread, without the threads having explicit knowledge of each other. 
             ARGS:
                 thread: The name of the thread as you see it on the gui, or as it is set in main.py
-                requestNum: the number that you got from passReequests, this is basically your ticket to map info back and forth.
+                requestNum: the number that you got from passRequests, this is basically your ticket to map info back and forth.
         '''
         with self.__thread_handler_lock:
             temp = self.__thread_handler.pass_return(thread, requestNum)
         return temp
     def get_host_name(self):
         '''
-            This funct returns the host name, so other classes can have acess to it. Because the server thread is too busy to be tasked with this function. 
+            This func returns the host name, so other classes can have access to it. Because the server thread is too busy to be tasked with this function. 
         '''
         with self.__hostName_lock:
             data = self.__hostName

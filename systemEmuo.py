@@ -17,10 +17,10 @@ class systemEmuo:
 
     def print_old_continuos(self, message, delay = 0.15, end=''):
         '''
-            This function prints things to ther termal
+            This function prints things to there terminal
             ARGS:
                 delay: add a delay between each messages
-                end: cheange the lasst thing printed on the line
+                end: change the lasts thing printed on the line
         '''
         if self.__display_off: 
             return
@@ -30,7 +30,7 @@ class systemEmuo:
                 time.sleep(delay)
     def clear(self):
         '''
-            clears the termal.
+            clears the terminal.
         '''
         if self.__display_off:
             return
