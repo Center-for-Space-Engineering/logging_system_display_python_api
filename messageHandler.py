@@ -9,7 +9,7 @@ from logging_system_display_python_api.graphicsHandler import graphicsHandler
 import threading
 import time
 # pylint: disable=import-error
-from threading_python_api.threadWrapper import threadWrapper 
+from threading_python_api.threadWrapper import threadWrapper
 
 class messageHandler(threadWrapper):
     '''
