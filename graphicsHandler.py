@@ -105,16 +105,21 @@ class graphicsHandler(sys):
         super().print_old_continuos(colored("KEY : ", 'light_blue') + colored(('\u25a0'), 'magenta') + f"= {self.__byte_div} bytes.", end='\n', delay=0)
         super().print_old_continuos("\n")
 
-    def report_byte(self, num_bytes):
+    def report_byte(self, byte_report):
         # pylint: disable=missing-function-docstring
-        bytesOriginal = num_bytes
-        num_bytes //= self.__byte_div
-        self.__byte_report.append(colored(f"Bytes received at: [{datetime.datetime.now()}]", 'light_blue') + " |" + colored(('\u25a0' * num_bytes) + f"({bytesOriginal})", 'magenta'))
-        self.__byte_report_server = {
-            'time' : datetime.datetime.now(),
-            'bytes': bytesOriginal
-        }
-        if len(self.__byte_report) >= self.__byte_disp : # this basically makes it a FIFO queue for messaging
+        self.__byte_report.append(str(byte_report))
+        thread_name = byte_report.get_thread_name()
+        if thread_name in self.__byte_report_server:
+            self.__byte_report_server[thread_name].append({
+                'time' : byte_report.get_time(),
+                'bytes': byte_report.get_byte_count()
+            })
+        else :
+            self.__byte_report_server[thread_name] = [{
+                'time' : byte_report.get_time(),
+                'bytes': byte_report.get_byte_count()
+            }]
+        if len(self.__byte_report) >= self.__byte_disp : # this basically makes it a FIFO queue
             self.__byte_report.remove(self.__byte_report[0])
         self.__coms.send_request(self.__server_name, ['report_byte_status', self.__byte_report_server]) #send the server the info to display
 
