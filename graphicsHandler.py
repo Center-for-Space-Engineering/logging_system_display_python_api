@@ -8,8 +8,8 @@ from termcolor import colored
 from logging_system_display_python_api.systemEmuo import systemEmuo as sys
 
 #import DTO for communicating internally
-from DTOs.logger_dto import logger_dto
-from DTOs.print_message_dto import print_message_dto #pylint: disable=w0611
+from logging_system_display_python_api.DTOs.logger_dto import logger_dto
+from logging_system_display_python_api.DTOs.print_message_dto import print_message_dto #pylint: disable=w0611
 
 class graphicsHandler(sys):
     '''
