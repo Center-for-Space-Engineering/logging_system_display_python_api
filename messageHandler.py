@@ -51,6 +51,10 @@ class messageHandler(threadWrapper):
         self.__server_name = server_name
         self.__hostName = hostname
         self.__hostName_lock = threading.Lock()
+        self.__print_message_lock = threading.Lock()
+        self.__permanent_message_lock = threading.Lock()
+        self.__report_bytes_lock = threading.Lock()
+        self.__report_thread_lock = threading.Lock()
         self.__graphics_lock = threading.Lock()
         self.__thread_handler_lock = threading.Lock()
         self.__status_lock = threading.Lock()
@@ -64,35 +68,35 @@ class messageHandler(threadWrapper):
         self.__thread_handler = threadHandler
     def send_message_permanent(self, message, typeM=2):
         # pylint: disable=missing-function-docstring
-        with self.__graphics_lock :
+        with self.__permanent_message_lock :
             self.__graphics.send_message_permanent(typeM, message)
     def print_message(self, message, typeM=2):
         # pylint: disable=missing-function-docstring
-        with self.__graphics_lock :
+        with self.__print_message_lock :
             self.__graphics.send_message(typeM, message)
     def report_thread(self,report):
         # pylint: disable=missing-function-docstring
-        with self.__graphics_lock :
+        with self.__report_thread_lock :
             self.__graphics.report_thread(report)
     def report_bytes(self, byteCount):
         # pylint: disable=missing-function-docstring
-        with self.__graphics_lock :
+        with self.__report_bytes_lock :
             self.__graphics.report_byte(byteCount)
     def flush(self):
         # pylint: disable=missing-function-docstring
-        with self.__graphics_lock :
+        with self.__print_message_lock :
             self.__graphics.write_message_log()
     def flush_prem(self):
         # pylint: disable=missing-function-docstring
-        with self.__graphics_lock :
+        with self.__permanent_message_lock :
             self.__graphics.write_message_permanent_log()
     def flush_thread_report(self):
         # pylint: disable=missing-function-docstring
-        with self.__graphics_lock :
+        with self.__report_thread_lock :
             self.__graphics.write_thread_report()
     def flush_bytes(self):
         # pylint: disable=missing-function-docstring
-        with self.__graphics_lock :
+        with self.__report_bytes_lock :
             self.__graphics.write_byte_report()
     def clear_disp(self):
         # pylint: disable=missing-function-docstring
