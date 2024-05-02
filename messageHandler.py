@@ -28,7 +28,7 @@ class messageHandler(threadWrapper):
             RULE: IF a class is directly controlling another class (A.K.A Do this thing now), do not use the coms class for sending request.
                   If a class is requesting information, or send indirect requests (A.K.A process this when you have time) it should go through this class.
     '''
-    def __init__(self, display_off = False, server_name = '', hostname='127.0.0.1', logging = True):
+    def __init__(self, display_off = True, server_name = '', hostname='127.0.0.1', logging = True):
         self.__func_dict = {
             'set_thread_handler' : self.set_thread_handler,
             'send_message_permanent' : self.send_message_permanent,
@@ -166,3 +166,5 @@ class messageHandler(threadWrapper):
         with self.__hostName_lock:
             data = self.__hostName
         return data
+    def get_test(self):
+        return "testing"
