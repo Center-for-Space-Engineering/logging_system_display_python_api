@@ -39,7 +39,6 @@ class messageHandler(threadWrapper):
             'flush_prem' : self.flush_prem,
             'flush_thread_report' : self.flush_thread_report,
             'flush_bytes' : self.flush_bytes,
-            'clear_disp' : self.clear_disp,
             'report_additional_status' : self.report_additional_status,
             'flush_status' : self.flush_status,
             'run' : self.run,
@@ -99,10 +98,6 @@ class messageHandler(threadWrapper):
         # pylint: disable=missing-function-docstring
         with self.__report_bytes_lock :
             self.__graphics.write_byte_report()
-    def clear_disp(self):
-        # pylint: disable=missing-function-docstring
-        with self.__graphics_lock :
-            self.__graphics.clear()
     def report_additional_status(self, thread_name, message):
         # pylint: disable=missing-function-docstring
         with self.__status_lock :
@@ -120,7 +115,6 @@ class messageHandler(threadWrapper):
         super().set_status("Running")
         while (super().get_running()):
             if self.__logging:
-                self.clear_disp()
                 self.flush_prem()
                 self.flush_status()
                 self.flush_thread_report()
