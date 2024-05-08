@@ -2,8 +2,6 @@
     This is the dto (data transfer object) for sending a time and a message to the logging systems in the code with a time stamp
 '''
 
-from termcolor import colored
-
 class logger_dto():
     '''
         Just give it a time stamp and message
@@ -25,4 +23,4 @@ class logger_dto():
         '''
             to string over load
         '''
-        return "[" + colored(self.__time, 'blue') + "]: " + str(self.__message)
+        return "[" + str(self.__time) + "]: " + str(self.__message)
