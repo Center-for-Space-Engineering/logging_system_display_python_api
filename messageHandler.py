@@ -10,6 +10,7 @@ import threading
 import time
 # pylint: disable=import-error
 from threading_python_api.threadWrapper import threadWrapper
+import requests
 
 class messageHandler(threadWrapper):
     '''
@@ -28,7 +29,7 @@ class messageHandler(threadWrapper):
             RULE: IF a class is directly controlling another class (A.K.A Do this thing now), do not use the coms class for sending request.
                   If a class is requesting information, or send indirect requests (A.K.A process this when you have time) it should go through this class.
     '''
-    def __init__(self, display_off = True, server_name = '', hostname='127.0.0.1', logging = True):
+    def __init__(self, display_off = True, server_name = '', hostname='127.0.0.1', logging = True, destination:str = 'Local', coms_name:str='coms', display_name:str = 'Local Host'):
         self.__func_dict = {
             'set_thread_handler' : self.set_thread_handler,
             'send_message_permanent' : self.send_message_permanent,
@@ -45,7 +46,8 @@ class messageHandler(threadWrapper):
             'run' : self.run,
             'get_system_emuo' : self.get_system_emuo,
             'send_request' : self.send_request,
-            'get_return' : self.get_return
+            'get_return' : self.get_return,
+            'set_host_url' : self.set_host_url, 
         }
         super().__init__(self.__func_dict)
         self.__server_name = server_name
@@ -58,9 +60,17 @@ class messageHandler(threadWrapper):
         self.__graphics_lock = threading.Lock()
         self.__thread_handler_lock = threading.Lock()
         self.__status_lock = threading.Lock()
+        self.__host_url_lock = threading.Lock()
         self.__thread_handler = None
         self.__logging = logging
-        self.__graphics = graphicsHandler(coms=self, server_name=self.__server_name, display_off=display_off)
+        self.__destination = destination
+        self.__display_name = display_name
+        self.__name = coms_name
+        self.__tap_requests = []
+        self.__subscriber = []
+        self.__host_url = ''
+        if self.__destination == "Local": #this is for local reporting
+            self.__graphics = graphicsHandler(coms=self, server_name=self.__server_name, display_off=display_off)
 
     def set_thread_handler(self, threadHandler):
         '''
@@ -69,20 +79,81 @@ class messageHandler(threadWrapper):
         self.__thread_handler = threadHandler
     def send_message_permanent(self, message, typeM=2):
         # pylint: disable=missing-function-docstring
-        with self.__permanent_message_lock :
-            self.__graphics.send_message_permanent(typeM, message)
+        if self.__destination == "Local":
+                with self.__permanent_message_lock :
+                    self.__graphics.send_message_permanent(typeM, message)
+        else : 
+            data = {
+                'sender' : self.__hostName,
+                'Display_name' : self.__display_name,
+                'request' : 'send_message_permanent',
+                'message' : message, 
+                'type' : typeM,
+            }
+
+            # Send the POST request
+            self.send_post([data])
     def print_message(self, message, typeM=2):
         # pylint: disable=missing-function-docstring
-        with self.__print_message_lock :
-            self.__graphics.send_message(typeM, message)
+        if self.__destination == "Local":
+            with self.__print_message_lock :
+                self.__graphics.send_message(typeM, message)
+        else : 
+            data = {
+                'sender' : self.__hostName,
+                'Display_name' : self.__display_name,
+                'request' : 'print_message',
+                'message' : message, 
+                'type' : typeM
+            }
+
+            # Send the POST request
+            self.send_post([data])
     def report_thread(self,report):
         # pylint: disable=missing-function-docstring
-        with self.__report_thread_lock :
-            self.__graphics.report_thread(report)
+        if self.__destination == "Local":
+            with self.__report_thread_lock :
+                self.__graphics.report_thread(report)
+        else : 
+            data = {
+                'sender' : self.__hostName,
+                'Display_name' : self.__display_name,
+                'request' : 'report_thread',
+                'message' : report,
+            }
+            
+            # Send the POST request
+            self.send_post([data])   
     def report_bytes(self, byteCount):
         # pylint: disable=missing-function-docstring
-        with self.__report_bytes_lock :
-            self.__graphics.report_byte(byteCount)
+        if self.__destination == "Local":
+            with self.__report_bytes_lock :
+                self.__graphics.report_byte(byteCount)
+        else : 
+            data = {
+                'sender' : self.__hostName,
+                'Display_name' : self.__display_name,
+                'message' : byteCount, 
+                'type' : 'report_bytes'
+            }
+
+            # Send the POST request
+            self.send_post([data])            
+    def report_additional_status(self, thread_name, message):
+        # pylint: disable=missing-function-docstring
+        if self.__destination == "Local":
+            with self.__status_lock :
+                self.__graphics.report_additional_status(thread_name, message)
+        else : 
+            data = {
+                'sender' : self.__hostName,
+                'Display_name' : self.__display_name,
+                'request' : 'report_additional_status',
+                'message' : message,
+            }
+
+            # Send the POST request
+            self.send_post([data])
     def flush(self):
         # pylint: disable=missing-function-docstring
         with self.__print_message_lock :
@@ -103,10 +174,6 @@ class messageHandler(threadWrapper):
         # pylint: disable=missing-function-docstring
         with self.__graphics_lock :
             self.__graphics.clear()
-    def report_additional_status(self, thread_name, message):
-        # pylint: disable=missing-function-docstring
-        with self.__status_lock :
-            self.__graphics.report_additional_status(thread_name, message)
     def flush_status(self):
         # pylint: disable=missing-function-docstring
         with self.__status_lock :
@@ -119,7 +186,17 @@ class messageHandler(threadWrapper):
         '''
         super().set_status("Running")
         while (super().get_running()):
-            if self.__logging:
+            #check to see if there is another task to be done
+            request = super().get_next_request()
+            # check to see if there is a request
+            if request is not None:
+                if len(request[1]) > 0:
+                    request[3] = self.__function_dict[request[0]](request[1])
+                else : 
+                    request[3] = self.__function_dict[request[0]]()
+                super().complete_request(request[4], request[3])
+
+            if self.__logging and self.__destination == "Local":
                 self.clear_disp()
                 self.flush_prem()
                 self.flush_status()
@@ -146,6 +223,9 @@ class messageHandler(threadWrapper):
         '''
         #NOTE: We still need a mutex lock here, even thought the taskHandler is doing locking as well, the taskHandler
         #   pointer (self.__taskHandler) is a variable that needs to be protected.
+
+        # NOTE: even if the request is for this class, the task handler will direct it back in to this class so 
+        # everything gets passed on. Less efficient, but cleaner code this way. 
         with self.__thread_handler_lock:
             temp = self.__thread_handler.pass_request(thread, request)
         return temp
@@ -168,3 +248,40 @@ class messageHandler(threadWrapper):
         return data
     def get_test(self):
         return "testing"
+    def create_tap(self, args):
+        '''
+            This function creates a tap, a tap will send the data it receives from the serial line to the class that created the tap.
+            ARGS:
+                args[0] : tap function to call. 
+                args[1] :  name of subscriber
+        '''
+        self.__tap_requests.append(args[0])
+        self.__subscriber.append(args[1])
+    def set_host_url(self, args):
+        '''
+            The server calls this function to set the host url, so coms can report to the host server.
+
+            Args :
+                args[0] : host url.
+        '''
+        with self.__host_url_lock:
+            self.___host_url = args[0]
+    def send_post(self, args):
+        '''
+            Send a post request to the host server for logging
+
+            ARGS:
+                args[0] : dictionary of data to send
+        '''
+        data = args[0]
+
+        with self.__host_url_lock:
+            temp_url = self.___host_url
+
+        if temp_url != '': #If the host url hasn't been set yet then we are not going to send logs. 
+            # Send the POST request
+            response = requests.post(temp_url, data=data)
+            
+            # Check the response
+            if response.status_code != 200:
+                print(f'Logging POST request to {self.___host_url} failed with status code: {response.status_code}')
