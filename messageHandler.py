@@ -285,3 +285,4 @@ class messageHandler(threadWrapper):
             # Check the response
             if response.status_code != 200:
                 print(f'Logging POST request to {self.___host_url} failed with status code: {response.status_code}')
+        return response
