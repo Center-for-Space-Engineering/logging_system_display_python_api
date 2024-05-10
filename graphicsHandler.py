@@ -3,7 +3,7 @@
     by system emuo, it also stores all logs, and sends them to location that need the logging information, like the server.  
 '''
 import datetime
-from termcolor import colored
+
 # pylint: disable=import-error
 
 #import DTO for communicating internally
