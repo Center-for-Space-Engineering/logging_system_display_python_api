@@ -277,6 +277,8 @@ class messageHandler(threadWrapper):
 
         with self.__host_url_lock:
             temp_url = self.__host_url
+        
+        response = None
 
         if temp_url != '': #If the host url hasn't been set yet then we are not going to send logs. 
             # Send the POST request
