@@ -2,8 +2,6 @@
     This modules is for reporting how many bytes a thread has received.
 '''
 
-from termcolor import colored
-
 class byte_report_dto():
     '''
         ARGS:
@@ -31,4 +29,4 @@ class byte_report_dto():
         '''
         return self.__byte_count
     def __str__(self) -> str:
-        return colored(f"Bytes received at: [{self.__time}]", 'light_blue') + " |" + colored(self.__byte_count, 'magenta')
+        return f"Bytes received at: [{self.__time}]" + " |" + str(self.__byte_count)

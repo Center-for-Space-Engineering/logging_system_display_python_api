@@ -86,8 +86,8 @@ class messageHandler(threadWrapper):
             data = {
                 'sender' : self.__hostName,
                 'Display_name' : self.__display_name,
-                'request' : 'send_message_permanent',
-                'message' : message, 
+                'function' : 'send_message_permanent',
+                'message' : message.get_message(), 
                 'type' : typeM,
             }
 
@@ -102,8 +102,8 @@ class messageHandler(threadWrapper):
             data = {
                 'sender' : self.__hostName,
                 'Display_name' : self.__display_name,
-                'request' : 'print_message',
-                'message' : message, 
+                'function' : 'print_message',
+                'message' : message.get_message(), 
                 'type' : typeM
             }
 
@@ -114,16 +114,7 @@ class messageHandler(threadWrapper):
         if self.__destination == "Local":
             with self.__report_thread_lock :
                 self.__graphics.report_thread(report)
-        else : 
-            data = {
-                'sender' : self.__hostName,
-                'Display_name' : self.__display_name,
-                'request' : 'report_thread',
-                'message' : report,
-            }
-            
-            # Send the POST request
-            self.send_post([data])   
+        # I dont want to report thread status on the host
     def report_bytes(self, byteCount):
         # pylint: disable=missing-function-docstring
         if self.__destination == "Local":
@@ -133,8 +124,11 @@ class messageHandler(threadWrapper):
             data = {
                 'sender' : self.__hostName,
                 'Display_name' : self.__display_name,
-                'message' : byteCount, 
-                'type' : 'report_bytes'
+                'message' : byteCount.get_byte_count(), 
+                'function' : 'report_bytes',
+                'type' : 'report_bytes',
+                'time' : byteCount.get_time(),
+                'thread_name' : byteCount.get_thread_name()
             }
 
             # Send the POST request
@@ -144,7 +138,8 @@ class messageHandler(threadWrapper):
         if self.__destination == "Local":
             with self.__status_lock :
                 self.__graphics.report_additional_status(thread_name, message)
-        else : 
+        else :
+            print('Here')
             data = {
                 'sender' : self.__hostName,
                 'Display_name' : self.__display_name,
@@ -264,8 +259,11 @@ class messageHandler(threadWrapper):
             Args :
                 args[0] : host url.
         '''
+        print(f'set url {args[0]}')
         with self.__host_url_lock:
-            self.___host_url = args[0]
+            self.__host_url = args[0]
+            print(f"Serial url {self.__host_url}")
+            print(f'set url {args[0]}')
     def send_post(self, args):
         '''
             Send a post request to the host server for logging
@@ -274,17 +272,21 @@ class messageHandler(threadWrapper):
                 args[0] : dictionary of data to send
         '''
         data = args[0]
-
+    
         with self.__host_url_lock:
             temp_url = self.__host_url
         
         response = None
 
-        if temp_url != '': #If the host url hasn't been set yet then we are not going to send logs. 
-            # Send the POST request
-            response = requests.post(temp_url, data=data)
-            
-            # Check the response
-            if response.status_code != 200:
-                print(f'Logging POST request to {self.___host_url} failed with status code: {response.status_code}')
+        try :
+            if temp_url != '': #If the host url hasn't been set yet then we are not going to send logs. 
+                # Send the POST request
+                response = requests.post('http://' + temp_url + '/logger_reports', data=data, timeout=1)
+
+                
+                # Check the response
+                if response.status_code != 200:
+                    print(f'Logging POST request to {self.___host_url} failed with status code: {response.status_code}')
+        except : #if request fails just move on
+            pass
         return response
