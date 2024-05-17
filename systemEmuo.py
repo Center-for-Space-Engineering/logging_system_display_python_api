@@ -24,16 +24,22 @@ class systemEmuo:
         '''
         if self.__display_off: 
             return
-        with self.__messageLock:
+        if self.__messageLock.acquire(timeout=1):
             print(message, end=end)
-            if delay != 0:
-                time.sleep(delay)
+            self.__messageLock.release()
+        else : 
+            raise RuntimeError("Could not aquire message lock")
+        if delay != 0:
+            time.sleep(delay)
     def clear(self):
         '''
             clears the terminal.
         '''
         if self.__display_off:
             return
-        with self.__messageLock:
+        if self.__messageLock.acquire(timeout=1):
             print("\033c", end='') #clears the terminal
+            self.__messageLock.release()
+        else : 
+            raise RuntimeError("Could not aquire message lock")
             

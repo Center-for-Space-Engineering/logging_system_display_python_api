@@ -40,7 +40,6 @@ class messageHandler(threadWrapper):
             'flush_prem' : self.flush_prem,
             'flush_thread_report' : self.flush_thread_report,
             'flush_bytes' : self.flush_bytes,
-            'clear_disp' : self.clear_disp,
             'report_additional_status' : self.report_additional_status,
             'flush_status' : self.flush_status,
             'run' : self.run,
@@ -70,7 +69,7 @@ class messageHandler(threadWrapper):
         self.__subscriber = []
         self.__host_url = ''
         if self.__destination == "Local": #this is for local reporting
-            self.__graphics = graphicsHandler(coms=self, server_name=self.__server_name, display_off=display_off)
+            self.__graphics = graphicsHandler(coms=self, server_name=self.__server_name, display_off=display_off, mesDisp=20)
 
     def set_thread_handler(self, threadHandler):
         '''
@@ -80,8 +79,11 @@ class messageHandler(threadWrapper):
     def send_message_permanent(self, message, typeM=2):
         # pylint: disable=missing-function-docstring
         if self.__destination == "Local":
-                with self.__permanent_message_lock :
+                if self.__permanent_message_lock.acquire(timeout=1):
                     self.__graphics.send_message_permanent(typeM, message)
+                    self.__permanent_message_lock.release()
+                else :
+                    raise RuntimeError('Could not aquire permanet message lock')
         else : 
             data = {
                 'sender' : self.__hostName,
@@ -96,8 +98,11 @@ class messageHandler(threadWrapper):
     def print_message(self, message, typeM=2):
         # pylint: disable=missing-function-docstring
         if self.__destination == "Local":
-            with self.__print_message_lock :
+            if self.__print_message_lock.acquire(timeout=1):
                 self.__graphics.send_message(typeM, message)
+                self.__print_message_lock.release()
+            else :
+                raise RuntimeError('Could not aquire print message lock')
         else : 
             data = {
                 'sender' : self.__hostName,
@@ -112,14 +117,20 @@ class messageHandler(threadWrapper):
     def report_thread(self,report):
         # pylint: disable=missing-function-docstring
         if self.__destination == "Local":
-            with self.__report_thread_lock :
+            if self.__report_thread_lock.acquire(timeout=1):
                 self.__graphics.report_thread(report)
+                self.__report_thread_lock.release()
+            else :
+                raise RuntimeError("Could not aquire report thread lock")
         # I dont want to report thread status on the host
     def report_bytes(self, byteCount):
         # pylint: disable=missing-function-docstring
         if self.__destination == "Local":
-            with self.__report_bytes_lock :
+            if self.__report_bytes_lock.acquire(timeout=1) :
                 self.__graphics.report_byte(byteCount)
+                self.__report_bytes_lock.release()
+            else :
+                raise RuntimeError("Could not aquire report bytes lock")
         else : 
             data = {
                 'sender' : self.__hostName,
@@ -136,10 +147,12 @@ class messageHandler(threadWrapper):
     def report_additional_status(self, thread_name, message):
         # pylint: disable=missing-function-docstring
         if self.__destination == "Local":
-            with self.__status_lock :
+            if self.__status_lock.acquire(timeout=1):
                 self.__graphics.report_additional_status(thread_name, message)
+                self.__status_lock.release()
+            else :
+                raise RuntimeError("Could not aquire status lock")
         else :
-            print('Here')
             data = {
                 'sender' : self.__hostName,
                 'Display_name' : self.__display_name,
@@ -151,28 +164,40 @@ class messageHandler(threadWrapper):
             self.send_post([data])
     def flush(self):
         # pylint: disable=missing-function-docstring
-        with self.__print_message_lock :
+        if self.__print_message_lock.acquire(timeout=1):
             self.__graphics.write_message_log()
+            self.__print_message_lock.release()
+        else :
+            raise RuntimeError("Could not aquire print message lock")
     def flush_prem(self):
         # pylint: disable=missing-function-docstring
-        with self.__permanent_message_lock :
+        if self.__permanent_message_lock.acquire(timeout=1) :
             self.__graphics.write_message_permanent_log()
+            self.__permanent_message_lock.release()
+        else :
+            raise RuntimeError("Could not aquire permanent message lock")
     def flush_thread_report(self):
         # pylint: disable=missing-function-docstring
-        with self.__report_thread_lock :
+        if self.__report_thread_lock.acquire(timeout=1):
             self.__graphics.write_thread_report()
+            self.__report_thread_lock.release()
+        else :
+            raise RuntimeError("Could not aquire report thread lock")
     def flush_bytes(self):
         # pylint: disable=missing-function-docstring
-        with self.__report_bytes_lock :
+        if self.__report_bytes_lock.acquire(timeout=1):
             self.__graphics.write_byte_report()
-    def clear_disp(self):
-        # pylint: disable=missing-function-docstring
-        with self.__graphics_lock :
-            self.__graphics.clear()
+            self.__report_bytes_lock.release()
+        else :
+            raise RuntimeError("Could not aquire report bytes lock")
+
     def flush_status(self):
         # pylint: disable=missing-function-docstring
-        with self.__status_lock :
+        if self.__status_lock.acquire(timeout=1) :
             self.__graphics.disp_additional_status()
+            self.__status_lock.release()
+        else :
+            raise RuntimeError("Could not aquire status lock")
     def run(self, refresh = 1): 
         '''
             This function prints thins in the order we want to see them to the screen.
@@ -192,7 +217,6 @@ class messageHandler(threadWrapper):
                 super().complete_request(request[4], request[3])
 
             if self.__logging and self.__destination == "Local":
-                self.clear_disp()
                 self.flush_prem()
                 self.flush_status()
                 self.flush_thread_report()
@@ -221,8 +245,7 @@ class messageHandler(threadWrapper):
 
         # NOTE: even if the request is for this class, the task handler will direct it back in to this class so 
         # everything gets passed on. Less efficient, but cleaner code this way. 
-        with self.__thread_handler_lock:
-            temp = self.__thread_handler.pass_request(thread, request)
+        temp = self.__thread_handler.pass_request(thread, request)
         return temp
     def get_return(self, thread, requestNum):
         '''
@@ -231,15 +254,17 @@ class messageHandler(threadWrapper):
                 thread: The name of the thread as you see it on the gui, or as it is set in main.py
                 requestNum: the number that you got from passRequests, this is basically your ticket to map info back and forth.
         '''
-        with self.__thread_handler_lock:
-            temp = self.__thread_handler.pass_return(thread, requestNum)
+        temp = self.__thread_handler.pass_return(thread, requestNum)
         return temp
     def get_host_name(self):
         '''
             This func returns the host name, so other classes can have access to it. Because the server thread is too busy to be tasked with this function. 
         '''
-        with self.__hostName_lock:
+        if self.__hostName_lock.acquire(timeout=1):
             data = self.__hostName
+            self.__hostName_lock.release()
+        else :
+            raise RuntimeError("Could not aquire host name lock")
         return data
     def get_test(self):
         return "testing"
@@ -260,10 +285,12 @@ class messageHandler(threadWrapper):
                 args[0] : host url.
         '''
         print(f'set url {args[0]}')
-        with self.__host_url_lock:
+        if self.__host_url_lock.acquire(timeout=1):
             self.__host_url = args[0]
-            print(f"Serial url {self.__host_url}")
-            print(f'set url {args[0]}')
+            self.__host_url_lock.release()
+        else :
+            raise RuntimeError("Could not aquire host url lock")
+
     def send_post(self, args):
         '''
             Send a post request to the host server for logging
@@ -273,8 +300,11 @@ class messageHandler(threadWrapper):
         '''
         data = args[0]
     
-        with self.__host_url_lock:
+        if self.__host_url_lock.acquire(timeout=1):
             temp_url = self.__host_url
+            self.__host_url_lock.release()
+        else :
+            raise RuntimeError("Could not aquire houst url lock")
         
         response = None
 
