@@ -56,15 +56,13 @@ class messageHandler(threadWrapper):
         self.__permanent_message_lock = threading.Lock()
         self.__report_bytes_lock = threading.Lock()
         self.__report_thread_lock = threading.Lock()
-        self.__graphics_lock = threading.Lock()
-        self.__thread_handler_lock = threading.Lock()
         self.__status_lock = threading.Lock()
         self.__host_url_lock = threading.Lock()
         self.__thread_handler = None
         self.__logging = logging
         self.__destination = destination
         self.__display_name = display_name
-        self.__name = coms_name
+        _ = coms_name # not used right now, but here just incase 
         self.__tap_requests = []
         self.__subscriber = []
         self.__host_url = ''
@@ -79,11 +77,11 @@ class messageHandler(threadWrapper):
     def send_message_permanent(self, message, typeM=2):
         # pylint: disable=missing-function-docstring
         if self.__destination == "Local":
-                if self.__permanent_message_lock.acquire(timeout=1):
-                    self.__graphics.send_message_permanent(typeM, message)
-                    self.__permanent_message_lock.release()
-                else :
-                    raise RuntimeError('Could not aquire permanet message lock')
+            if self.__permanent_message_lock.acquire(timeout=1): # pylint: disable=R1732
+                self.__graphics.send_message_permanent(typeM, message)
+                self.__permanent_message_lock.release()
+            else :
+                raise RuntimeError('Could not aquire permanet message lock')
         else : 
             data = {
                 'sender' : self.__hostName,
@@ -98,7 +96,7 @@ class messageHandler(threadWrapper):
     def print_message(self, message, typeM=2):
         # pylint: disable=missing-function-docstring
         if self.__destination == "Local":
-            if self.__print_message_lock.acquire(timeout=1):
+            if self.__print_message_lock.acquire(timeout=1): # pylint: disable=R1732
                 self.__graphics.send_message(typeM, message)
                 self.__print_message_lock.release()
             else :
@@ -117,7 +115,7 @@ class messageHandler(threadWrapper):
     def report_thread(self,report):
         # pylint: disable=missing-function-docstring
         if self.__destination == "Local":
-            if self.__report_thread_lock.acquire(timeout=1):
+            if self.__report_thread_lock.acquire(timeout=1): # pylint: disable=R1732
                 self.__graphics.report_thread(report)
                 self.__report_thread_lock.release()
             else :
@@ -126,7 +124,7 @@ class messageHandler(threadWrapper):
     def report_bytes(self, byteCount):
         # pylint: disable=missing-function-docstring
         if self.__destination == "Local":
-            if self.__report_bytes_lock.acquire(timeout=1) :
+            if self.__report_bytes_lock.acquire(timeout=1): # pylint: disable=R1732
                 self.__graphics.report_byte(byteCount)
                 self.__report_bytes_lock.release()
             else :
@@ -147,7 +145,7 @@ class messageHandler(threadWrapper):
     def report_additional_status(self, thread_name, message):
         # pylint: disable=missing-function-docstring
         if self.__destination == "Local":
-            if self.__status_lock.acquire(timeout=1):
+            if self.__status_lock.acquire(timeout=1): # pylint: disable=R1732
                 self.__graphics.report_additional_status(thread_name, message)
                 self.__status_lock.release()
             else :
@@ -164,28 +162,28 @@ class messageHandler(threadWrapper):
             self.send_post([data])
     def flush(self):
         # pylint: disable=missing-function-docstring
-        if self.__print_message_lock.acquire(timeout=1):
+        if self.__print_message_lock.acquire(timeout=1): # pylint: disable=R1732
             self.__graphics.write_message_log()
             self.__print_message_lock.release()
         else :
             raise RuntimeError("Could not aquire print message lock")
     def flush_prem(self):
         # pylint: disable=missing-function-docstring
-        if self.__permanent_message_lock.acquire(timeout=1) :
+        if self.__permanent_message_lock.acquire(timeout=1): # pylint: disable=R1732
             self.__graphics.write_message_permanent_log()
             self.__permanent_message_lock.release()
         else :
             raise RuntimeError("Could not aquire permanent message lock")
     def flush_thread_report(self):
         # pylint: disable=missing-function-docstring
-        if self.__report_thread_lock.acquire(timeout=1):
+        if self.__report_thread_lock.acquire(timeout=1): # pylint: disable=R1732
             self.__graphics.write_thread_report()
             self.__report_thread_lock.release()
         else :
             raise RuntimeError("Could not aquire report thread lock")
     def flush_bytes(self):
         # pylint: disable=missing-function-docstring
-        if self.__report_bytes_lock.acquire(timeout=1):
+        if self.__report_bytes_lock.acquire(timeout=1): # pylint: disable=R1732
             self.__graphics.write_byte_report()
             self.__report_bytes_lock.release()
         else :
@@ -193,7 +191,7 @@ class messageHandler(threadWrapper):
 
     def flush_status(self):
         # pylint: disable=missing-function-docstring
-        if self.__status_lock.acquire(timeout=1) :
+        if self.__status_lock.acquire(timeout=1): # pylint: disable=R1732
             self.__graphics.disp_additional_status()
             self.__status_lock.release()
         else :
@@ -260,13 +258,16 @@ class messageHandler(threadWrapper):
         '''
             This func returns the host name, so other classes can have access to it. Because the server thread is too busy to be tasked with this function. 
         '''
-        if self.__hostName_lock.acquire(timeout=1):
+        if self.__hostName_lock.acquire(timeout=1): # pylint: disable=R1732
             data = self.__hostName
             self.__hostName_lock.release()
         else :
             raise RuntimeError("Could not aquire host name lock")
         return data
     def get_test(self):
+        '''
+            Tempory function for testing unit tests
+        '''
         return "testing"
     def create_tap(self, args):
         '''
@@ -285,7 +286,7 @@ class messageHandler(threadWrapper):
                 args[0] : host url.
         '''
         print(f'set url {args[0]}')
-        if self.__host_url_lock.acquire(timeout=1):
+        if self.__host_url_lock.acquire(timeout=1): # pylint: disable=R1732
             self.__host_url = args[0]
             self.__host_url_lock.release()
         else :
@@ -300,7 +301,7 @@ class messageHandler(threadWrapper):
         '''
         data = args[0]
     
-        if self.__host_url_lock.acquire(timeout=1):
+        if self.__host_url_lock.acquire(timeout=1): # pylint: disable=R1732
             temp_url = self.__host_url
             self.__host_url_lock.release()
         else :
@@ -312,11 +313,11 @@ class messageHandler(threadWrapper):
             if temp_url != '': #If the host url hasn't been set yet then we are not going to send logs. 
                 # Send the POST request
                 response = requests.post('http://' + temp_url + '/logger_reports', data=data, timeout=1)
-
-                
                 # Check the response
                 if response.status_code != 200:
                     print(f'Logging POST request to {self.___host_url} failed with status code: {response.status_code}')
-        except : #if request fails just move on
+        # pylint : disable=W0702
+        except : 
+            #if request fails just move on
             pass
         return response

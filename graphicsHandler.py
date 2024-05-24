@@ -14,14 +14,13 @@ class graphicsHandler():
     '''
         This module is tasked with distributing all the log message to the server. 
     '''
-    def __init__(self, mesDisp = 10, byte_disp = 10, byte_div = 100, coms = None, server_name = '', display_off=False):
+    def __init__(self, mesDisp = 10, byte_disp = 10, coms = None, server_name = ''):
         self.__messages = [(2, logger_dto(time = f"{datetime.datetime.now()}", message = 'Graphics handler started'))]
         self.__threads_status = []
         self.__message_displayed = mesDisp
         self.__byte_report = []
         self.__byte_report_server = {}
         self.__byte_disp = byte_disp
-        self.__byte_div = byte_div
         self.__messages_permanent = []
         self.__coms = coms
         self.__status_message = {}
