@@ -29,7 +29,7 @@ class messageHandler(threadWrapper):
             RULE: IF a class is directly controlling another class (A.K.A Do this thing now), do not use the coms class for sending request.
                   If a class is requesting information, or send indirect requests (A.K.A process this when you have time) it should go through this class.
     '''
-    def __init__(self, display_off = True, server_name = '', hostname='127.0.0.1', logging = True, destination:str = 'Local', coms_name:str='coms', display_name:str = 'Local Host'):
+    def __init__(self, server_name = '', hostname='127.0.0.1', logging = True, destination:str = 'Local', coms_name:str='coms', display_name:str = 'Local Host'):
         self.__func_dict = {
             'set_thread_handler' : self.set_thread_handler,
             'send_message_permanent' : self.send_message_permanent,
@@ -67,7 +67,7 @@ class messageHandler(threadWrapper):
         self.__subscriber = []
         self.__host_url = ''
         if self.__destination == "Local": #this is for local reporting
-            self.__graphics = graphicsHandler(coms=self, server_name=self.__server_name, display_off=display_off, mesDisp=20)
+            self.__graphics = graphicsHandler(coms=self, server_name=self.__server_name, mesDisp=20)
 
     def set_thread_handler(self, threadHandler):
         '''
@@ -316,8 +316,7 @@ class messageHandler(threadWrapper):
                 # Check the response
                 if response.status_code != 200:
                     print(f'Logging POST request to {self.___host_url} failed with status code: {response.status_code}')
-        # pylint : disable=W0702
-        except : 
+        except : # pylint: disable=W0702
             #if request fails just move on
             pass
         return response
