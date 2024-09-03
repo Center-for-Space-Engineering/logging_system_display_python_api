@@ -305,7 +305,7 @@ class messageHandler(threadWrapper):
             temp_url = self.__host_url
             self.__host_url_lock.release()
         else :
-            raise RuntimeError("Could not aquire houst url lock")
+            raise RuntimeError("Could not aquire host url lock")
         
         response = None
 
