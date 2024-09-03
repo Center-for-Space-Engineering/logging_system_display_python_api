@@ -67,7 +67,7 @@ class messageHandler(threadWrapper):
         self.__subscriber = []
         self.__host_url = ''
         if self.__destination == "Local": #this is for local reporting
-            self.__graphics = graphicsHandler(coms=self, server_name=self.__server_name, mesDisp=20)
+            self.__graphics = graphicsHandler(coms=self, server_name=self.__server_name, mesDisp=10)
 
     def set_thread_handler(self, threadHandler):
         '''
