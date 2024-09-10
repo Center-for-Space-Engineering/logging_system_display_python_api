@@ -5,12 +5,13 @@
     NOTE: This class needs to be pair with the `threading_python_api` in order to work.
 '''
 # pylint: disable=import-error
-from logging_system_display_python_api.graphicsHandler import graphicsHandler
 import threading
 import time
 # pylint: disable=import-error
 from threading_python_api.threadWrapper import threadWrapper
 import requests
+from logging_system_display_python_api.graphicsHandler import graphicsHandler
+from logging_system_display_python_api.logger import loggerCustom
 
 class messageHandler(threadWrapper):
     '''
@@ -29,7 +30,7 @@ class messageHandler(threadWrapper):
             RULE: IF a class is directly controlling another class (A.K.A Do this thing now), do not use the coms class for sending request.
                   If a class is requesting information, or send indirect requests (A.K.A process this when you have time) it should go through this class.
     '''
-    def __init__(self, server_name = '', hostname='127.0.0.1', logging = True, destination:str = 'Local', coms_name:str='coms', display_name:str = 'Local Host'):
+    def __init__(self, server_name = '', hostname='127.0.0.1', logging = True, destination:str = 'Local', coms_name:str='coms', display_name:str = 'Local Host', database_name:str = ''):
         self.__func_dict = {
             'set_thread_handler' : self.set_thread_handler,
             'send_message_permanent' : self.send_message_permanent,
@@ -66,8 +67,13 @@ class messageHandler(threadWrapper):
         self.__tap_requests = []
         self.__subscriber = []
         self.__host_url = ''
+        self.__database_name = database_name
+
+        self.__logger = loggerCustom("logs/coms.txt")
+
         if self.__destination == "Local": #this is for local reporting
             self.__graphics = graphicsHandler(coms=self, server_name=self.__server_name, mesDisp=10)
+            self.__reports_list = []
 
     def set_thread_handler(self, threadHandler):
         '''
@@ -123,8 +129,28 @@ class messageHandler(threadWrapper):
         # I dont want to report thread status on the host
     def report_bytes(self, byteCount):
         # pylint: disable=missing-function-docstring
+
         if self.__destination == "Local":
+            table_name = byteCount.get_thread_name() + "_byte_report"
+            if not table_name in self.__reports_list:
+                new_table = {
+                    table_name : [['bytes_per_second', 0, 'float'], ['time', 0, 'string']]
+                }
+
+                self.send_request(self.__database_name, ['create_table_external', new_table])
+
+
             if self.__report_bytes_lock.acquire(timeout=1): # pylint: disable=R1732
+                data = {
+                    'bytes per second' : [byteCount.get_byte_count()],
+                    'time' : [byteCount.get_time()]
+                }
+
+                return_val = self.send_request(self.__database_name, ['save_data_group', table_name, data, byteCount.get_thread_name()])
+                 
+                
+                self.__logger.send_log(f"sent save request table name {table_name} return val {return_val}")
+
                 self.__graphics.report_byte(byteCount)
                 self.__report_bytes_lock.release()
             else :
