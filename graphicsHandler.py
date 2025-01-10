@@ -9,6 +9,7 @@ import datetime
 #import DTO for communicating internally
 from logging_system_display_python_api.DTOs.logger_dto import logger_dto
 from logging_system_display_python_api.DTOs.print_message_dto import print_message_dto #pylint: disable=w0611
+from logging_system_display_python_api.logger import loggerCustom
 
 class graphicsHandler():
     '''
@@ -25,6 +26,7 @@ class graphicsHandler():
         self.__coms = coms
         self.__status_message = {}
         self.__server_name = server_name
+        # self.__logger = loggerCustom("logs/graphicsHandler.txt")
 
     def write_message_log(self):
         # pylint: disable=missing-function-docstring
@@ -39,6 +41,7 @@ class graphicsHandler():
         self.__messages.append((num, dto))
         if len(self.__messages) >= self.__message_displayed: # this basically makes it a FIFO queue for messaging
             self.__messages.remove(self.__messages[0])
+        # self.__logger.send_log(f"leng messages: {len(self.__messages)}")
     
     def write_message_permanent_log(self):
         # pylint: disable=missing-function-docstring
@@ -61,6 +64,7 @@ class graphicsHandler():
         self.__coms.send_request(self.__server_name, ['thread_report', report_copy]) #send the server the info to display
         if len(self.__threads_status) != 0:
             self.__threads_status.clear()
+        # self.__logger.send_log(f"leng thread report: {len(self.__threads_status)}")
 
     def write_byte_report(self):
         # pylint: disable=missing-function-docstring
@@ -82,6 +86,7 @@ class graphicsHandler():
             }]
         if len(self.__byte_report) >= self.__byte_disp : # this basically makes it a FIFO queue
             self.__byte_report.remove(self.__byte_report[0])
+        # self.__logger.send_log(f"leng report bytes: {len(self.__byte_report)}")
 
     def report_additional_status(self, thread_name, message):
         # pylint: disable=missing-function-docstring

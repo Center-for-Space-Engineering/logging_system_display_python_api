@@ -24,7 +24,7 @@ class systemEmuo:
         '''
         if self.__display_off: 
             return
-        if self.__messageLock.acquire(timeout=1): # pylint: disable=R1732
+        if self.__messageLock.acquire(timeout=10): # pylint: disable=R1732
             print(message, end=end)
             self.__messageLock.release()
         else : 
@@ -37,7 +37,7 @@ class systemEmuo:
         '''
         if self.__display_off:
             return
-        if self.__messageLock.acquire(timeout=1): # pylint: disable=R1732
+        if self.__messageLock.acquire(timeout=10): # pylint: disable=R1732
             print("\033c", end='') #clears the terminal
             self.__messageLock.release()
         else : 
