@@ -300,23 +300,31 @@ class messageHandler(threadWrapper):
                 args[0] : dictionary of data to send
         '''
         data = args[0]
+        request = 'NA'
+
+        if len(args) > 1:
+            request = args[1]
     
         if self.__host_url_lock.acquire(timeout=1): # pylint: disable=R1732
             temp_url = self.__host_url
             self.__host_url_lock.release()
         else :
-            raise RuntimeError("Could not aquire houst url lock")
+            raise RuntimeError("Could not aquire host url lock")
         
         response = None
 
         try :
             if temp_url != '': #If the host url hasn't been set yet then we are not going to send logs. 
                 # Send the POST request
-                response = requests.post('http://' + temp_url + '/logger_reports', data=data, timeout=1)
+                if request == 'NA':
+                    response = requests.post('http://' + temp_url + '/logger_reports', data=data, timeout=1)
+                else :
+                    response = requests.post('http://' + temp_url + request, json=data, timeout=1)
+
                 # Check the response
                 if response.status_code != 200:
-                    print(f'Logging POST request to {self.___host_url} failed with status code: {response.status_code}')
-        except : # pylint: disable=W0702
+                    print(f'POST request to {temp_url} failed with status code: {response.status_code}')
+        except Exception as e: # pylint: disable=W0702
             #if request fails just move on
             pass
         return response
