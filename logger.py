@@ -12,11 +12,11 @@ class loggerCustom():
         It has no threading protection. In other words classes should not 
         share access to one of these objects. 
     '''
-    def __init__(self, file):
+    def __init__(self, file, log_directory="logs/"):
         try :
             self.__file = open(file, "w+")
         except : # pylint: disable=w0702
-            os.mkdir("logs/")
+            os.mkdir(log_directory)
             self.__file = open(file, "w+") # pylint: disable=r1732 
     def send_log(self, text):
         # pylint: disable=missing-function-docstring
