@@ -87,7 +87,7 @@ class messageHandler(threadWrapper):
                 self.__graphics.send_message_permanent(typeM, message)
                 self.__permanent_message_lock.release()
             else :
-                raise RuntimeError('Could not aquire permanet message lock')
+                raise RuntimeError('Could not acquire permanent message lock')
         else : 
             data = {
                 'sender' : self.__hostName,
@@ -106,7 +106,7 @@ class messageHandler(threadWrapper):
                 self.__graphics.send_message(typeM, message)
                 self.__print_message_lock.release()
             else :
-                raise RuntimeError('Could not aquire print message lock')
+                raise RuntimeError('Could not acquire print message lock')
         else : 
             data = {
                 'sender' : self.__hostName,
@@ -125,7 +125,7 @@ class messageHandler(threadWrapper):
                 self.__graphics.report_thread(report)
                 self.__report_thread_lock.release()
             else :
-                raise RuntimeError("Could not aquire report thread lock")
+                raise RuntimeError("Could not acquire report thread lock")
         # I dont want to report thread status on the host
     def report_bytes(self, byteCount):
         # pylint: disable=missing-function-docstring
@@ -154,7 +154,7 @@ class messageHandler(threadWrapper):
                 self.__graphics.report_byte(byteCount)
                 self.__report_bytes_lock.release()
             else :
-                raise RuntimeError("Could not aquire report bytes lock")
+                raise RuntimeError("Could not acquire report bytes lock")
         else : 
             data = {
                 'sender' : self.__hostName,
@@ -175,7 +175,7 @@ class messageHandler(threadWrapper):
                 self.__graphics.report_additional_status(thread_name, message)
                 self.__status_lock.release()
             else :
-                raise RuntimeError("Could not aquire status lock")
+                raise RuntimeError("Could not acquire status lock")
         else :
             data = {
                 'sender' : self.__hostName,
@@ -192,28 +192,28 @@ class messageHandler(threadWrapper):
             self.__graphics.write_message_log()
             self.__print_message_lock.release()
         else :
-            raise RuntimeError("Could not aquire print message lock")
+            raise RuntimeError("Could not acquire print message lock")
     def flush_prem(self):
         # pylint: disable=missing-function-docstring
         if self.__permanent_message_lock.acquire(timeout=1): # pylint: disable=R1732
             self.__graphics.write_message_permanent_log()
             self.__permanent_message_lock.release()
         else :
-            raise RuntimeError("Could not aquire permanent message lock")
+            raise RuntimeError("Could not acquire permanent message lock")
     def flush_thread_report(self):
         # pylint: disable=missing-function-docstring
         if self.__report_thread_lock.acquire(timeout=1): # pylint: disable=R1732
             self.__graphics.write_thread_report()
             self.__report_thread_lock.release()
         else :
-            raise RuntimeError("Could not aquire report thread lock")
+            raise RuntimeError("Could not acquire report thread lock")
     def flush_bytes(self):
         # pylint: disable=missing-function-docstring
         if self.__report_bytes_lock.acquire(timeout=1): # pylint: disable=R1732
             self.__graphics.write_byte_report()
             self.__report_bytes_lock.release()
         else :
-            raise RuntimeError("Could not aquire report bytes lock")
+            raise RuntimeError("Could not acquire report bytes lock")
 
     def flush_status(self):
         # pylint: disable=missing-function-docstring
@@ -221,7 +221,7 @@ class messageHandler(threadWrapper):
             self.__graphics.disp_additional_status()
             self.__status_lock.release()
         else :
-            raise RuntimeError("Could not aquire status lock")
+            raise RuntimeError("Could not acquire status lock")
     def run(self, refresh = 1): 
         '''
             This function prints thins in the order we want to see them to the screen.
@@ -288,7 +288,7 @@ class messageHandler(threadWrapper):
             data = self.__hostName
             self.__hostName_lock.release()
         else :
-            raise RuntimeError("Could not aquire host name lock")
+            raise RuntimeError("Could not acquire host name lock")
         return data
     def get_test(self):
         '''
@@ -316,7 +316,7 @@ class messageHandler(threadWrapper):
             self.__host_url = args[0]
             self.__host_url_lock.release()
         else :
-            raise RuntimeError("Could not aquire host url lock")
+            raise RuntimeError("Could not acquire host url lock")
 
     def send_post(self, args):
         '''
@@ -335,7 +335,7 @@ class messageHandler(threadWrapper):
             temp_url = self.__host_url
             self.__host_url_lock.release()
         else :
-            raise RuntimeError("Could not aquire host url lock")
+            raise RuntimeError("Could not acquire host url lock")
         
         response = None
 
