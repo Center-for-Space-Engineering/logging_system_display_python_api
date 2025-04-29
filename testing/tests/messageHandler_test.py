@@ -106,36 +106,23 @@ def test_send_message_permanent():
     assert not message_handler_local._messageHandler__permanent_message_lock.locked()
 
 @pytest.mark.messageHandler_tests
-def test_print_message_local():
-    message_handler = messageHandler(destination='Local')
+def test_print_message():
+    # define message handlers
+    message_handler_local = messageHandler(destination='Local')
+    message_handler_server = messageHandler(server_name='Test Server', hostname='127.0.0.1', destination='server', display_name="messageHandler test")
+    message_handler_server._messageHandler__host_url = "127.0.0.1:5000"
 
+    # define resources
     message = print_message_dto("Hello World")
-    message_handler.print_message(message, typeM=2)
-
-    message_handler_messages = message_handler._messageHandler__graphics._graphicsHandler__messages
-
+    
+    # test local
+    message_handler_local.print_message(message, typeM=2)
+    message_handler_messages = message_handler_local._messageHandler__graphics._graphicsHandler__messages
     assert message_handler_messages[-1][0] == 2
     assert message_handler_messages[-1][1].get_message() ==  message.get_message()
 
-    assert not message_handler._messageHandler__print_message_lock.locked()
-
-@pytest.mark.messageHandler_tests
-def test_print_message_local_lock_unavailable():
-    message_handler = messageHandler(destination='Local')
-
-    message = print_message_dto("Hello World")
-    message_handler._messageHandler__print_message_lock.acquire()
-
-    with pytest.raises(RuntimeError):
-        message_handler.print_message(message, typeM=2)
-
-@pytest.mark.messageHandler_tests
-def test_print_message_server():
-    message_handler = messageHandler(server_name='Test Server', hostname='127.0.0.1', destination='server', display_name="messageHandler test")
-    message_handler._messageHandler__host_url = "127.0.0.1:5000"
-
-    message = print_message_dto("Hello World")
-    message_handler.print_message(message, typeM=2)
+    # test server
+    message_handler_server.print_message(message, typeM=2)
 
     post_received_event.wait()
 
@@ -149,64 +136,57 @@ def test_print_message_server():
 
     assert received_post == expected_data
 
+    # test key check
+    message_handler_local._messageHandler__print_message_lock.acquire()
+    with pytest.raises(RuntimeError):
+        message_handler_local.print_message(message, typeM=2)
+    message_handler_local._messageHandler__print_message_lock.release()
+
+    # test key return
+    assert not message_handler_local._messageHandler__print_message_lock.locked()
+
+
 @pytest.mark.messageHandler_tests
 def test_report_thread():
-    message_handler = messageHandler(destination='Local')
+    # define message handlers
+    message_handler_local = messageHandler(destination='Local')
+    message_handler_server = messageHandler(server_name='Test Server', hostname='127.0.0.1', destination='server', display_name="messageHandler test")
+    message_handler_server._messageHandler__host_url = "127.0.0.1:5000"
+    
+    # test local
+    message_handler_local.report_thread("Hello World")
+    assert message_handler_local._messageHandler__graphics._graphicsHandler__threads_status == "Hello World"
 
-    message_handler.report_thread("Hello World")
-
-    assert message_handler._messageHandler__graphics._graphicsHandler__threads_status == "Hello World"
-
-    assert not message_handler._messageHandler__report_thread_lock.locked()
-
-@pytest.mark.messageHandler_tests
-def test_report_thread_local_lock_unavailable():
-    message_handler = messageHandler(destination='Local')
-
-    message_handler._messageHandler__report_thread_lock.acquire()
-
+    # test key check
+    message_handler_local._messageHandler__report_thread_lock.acquire()
     with pytest.raises(RuntimeError):
-        message_handler.report_thread("Hello World")
+        message_handler_local.report_thread("Hello World")
+    message_handler_local._messageHandler__report_thread_lock.release()
+
+    # test key return
+    assert not message_handler_local._messageHandler__report_thread_lock.locked()
 
 @pytest.mark.messageHandler_tests
-def test_report_bytes_local():
-    message_handler = messageHandler(destination='Local', database_name="testing")
+def test_report_bytes():
+    # define message handlers
+    message_handler_local = messageHandler(destination='Local')
+    message_handler_server = messageHandler(server_name='Test Server', hostname='127.0.0.1', destination='server', display_name="messageHandler test")
+    message_handler_server._messageHandler__host_url = "127.0.0.1:5000"
 
-    threadpool = taskHandler(message_handler)
-    message_handler.set_thread_handler(threadpool)
-
-    byte_report = byte_report_dto("testing", str(datetime.now()), 42)
-
-    message_handler.report_bytes(byte_report)
-
-    assert message_handler._messageHandler__graphics._graphicsHandler__byte_report[-1] == str(byte_report)
-    assert not message_handler._messageHandler__report_bytes_lock.locked()
-
-@pytest.mark.messageHandler_tests
-def test_report_bytes_lock_unavailable():
-    message_handler = messageHandler(destination='Local', database_name="testing")
-
-    threadpool = taskHandler(message_handler)
-    message_handler.set_thread_handler(threadpool)
-
-    message_handler._messageHandler__report_bytes_lock.acquire()
-
-    with pytest.raises(RuntimeError):
-        byte_report = byte_report_dto("testing", str(datetime.now()), 42)
-        message_handler.report_bytes(byte_report)
-
-@pytest.mark.messageHandler_tests
-def test_report_bytes_not_local():
-    message_handler = messageHandler(server_name='Test Server', hostname='127.0.0.1', destination='server', display_name="messageHandler test")
-    message_handler._messageHandler__host_url = "127.0.0.1:5000"
-
-    threadpool = taskHandler(message_handler)
-    message_handler.set_thread_handler(threadpool)
-
+    # define resources
+    threadpool_local = taskHandler(message_handler_local)
+    message_handler_local.set_thread_handler(threadpool_local)
+    threadpool_server = taskHandler(message_handler_server)
+    message_handler_server.set_thread_handler(threadpool_server)
     now_str = str(datetime.now())
-
     byte_report = byte_report_dto("testing", now_str, 42)
-    message_handler.report_bytes(byte_report)
+    
+    # test local
+    message_handler_local.report_bytes(byte_report)
+    assert message_handler_local._messageHandler__graphics._graphicsHandler__byte_report[-1] == str(byte_report)
+    
+    # test server
+    message_handler_server.report_bytes(byte_report)
 
     post_received_event.wait()
 
@@ -222,41 +202,33 @@ def test_report_bytes_not_local():
 
     assert received_post == expected_data
 
+    # test key check
+    message_handler_local._messageHandler__report_bytes_lock.acquire()
+    with pytest.raises(RuntimeError):
+        message_handler_local.report_bytes(byte_report)
+    message_handler_local._messageHandler__report_bytes_lock.release()
+
+    # test key return
+    assert not message_handler_local._messageHandler__print_message_lock.locked()
+
 @pytest.mark.messageHandler_tests
 def test_report_additional_status_local():
-    message_handler = messageHandler(destination='Local', database_name="testing")
+    # define message handlers
+    message_handler_local = messageHandler(destination='Local')
+    message_handler_server = messageHandler(server_name='Test Server', hostname='127.0.0.1', destination='server', display_name="messageHandler test")
+    message_handler_server._messageHandler__host_url = "127.0.0.1:5000"
 
-    threadpool = taskHandler(message_handler)
-    message_handler.set_thread_handler(threadpool)
-
-
+    # define resources
+    threadpool_local = taskHandler(message_handler_local)
+    message_handler_local.set_thread_handler(threadpool_local)
+    threadpool_server = taskHandler(message_handler_server)
+    message_handler_server.set_thread_handler(threadpool_server)
+    
+    # test local
     message_handler.report_additional_status("testing", "hello world")
-
     assert message_handler._messageHandler__graphics._graphicsHandler__status_message["testing"] == "hello world"
-    assert not message_handler._messageHandler__report_bytes_lock.locked()
-
-@pytest.mark.messageHandler_tests
-def test_report_additional_status_lock_unavailable():
-    message_handler = messageHandler(destination='Local', database_name="testing")
-
-    threadpool = taskHandler(message_handler)
-    message_handler.set_thread_handler(threadpool)
-
-    message_handler._messageHandler__status_lock.acquire()
-
-    with pytest.raises(RuntimeError):
-        message_handler.report_additional_status("testing", "hello world")
-
-@pytest.mark.messageHandler_tests
-def test_report_additional_status_server():
-    message_handler = messageHandler(server_name='Test Server', hostname='127.0.0.1', destination='server', display_name="messageHandler test")
-    message_handler._messageHandler__host_url = "127.0.0.1:5000"
-
-    threadpool = taskHandler(message_handler)
-    message_handler.set_thread_handler(threadpool)
-
-    now_str = str(datetime.now())
-
+    
+    # test server
     message_handler.report_additional_status("testing", "hello world")
 
     post_received_event.wait()
@@ -268,16 +240,13 @@ def test_report_additional_status_server():
         'message' : ["hello world"],
     }
 
-    assert received_post == expected_data    # test server
-    message_handler_server.send_message_permanent(message, typeM=2)
-    post_received_event.wait()
-
-    expected_data = {
-        'sender' : ['127.0.0.1'],
-        'Display_name' : ['messageHandler test'],
-        'function' : ['send_message_permanent'],
-        'message' : ['Hello World'], 
-        'type' : ['2'],
-    }
-
     assert received_post == expected_data
+
+    # test key check
+    message_handler._messageHandler__status_lock.acquire()
+    with pytest.raises(RuntimeError):
+        message_handler.report_additional_status("testing", "hello world")
+    message_handler._messageHandler__status_lock.release()
+
+    # test key return
+    assert not message_handler._messageHandler__report_bytes_lock.locked()
