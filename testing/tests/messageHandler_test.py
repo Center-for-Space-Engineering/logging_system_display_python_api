@@ -145,7 +145,6 @@ def test_print_message():
     # test key return
     assert not message_handler_local._messageHandler__print_message_lock.locked()
 
-
 @pytest.mark.messageHandler_tests
 def test_report_thread():
     # define message handlers
@@ -225,11 +224,11 @@ def test_report_additional_status_local():
     message_handler_server.set_thread_handler(threadpool_server)
     
     # test local
-    message_handler.report_additional_status("testing", "hello world")
-    assert message_handler._messageHandler__graphics._graphicsHandler__status_message["testing"] == "hello world"
+    message_handler_local.report_additional_status("testing", "hello world")
+    assert message_handler_local._messageHandler__graphics._graphicsHandler__status_message["testing"] == "hello world"
     
     # test server
-    message_handler.report_additional_status("testing", "hello world")
+    message_handler_server.report_additional_status("testing", "hello world")
 
     post_received_event.wait()
 
@@ -243,10 +242,10 @@ def test_report_additional_status_local():
     assert received_post == expected_data
 
     # test key check
-    message_handler._messageHandler__status_lock.acquire()
+    message_handler_local._messageHandler__status_lock.acquire()
     with pytest.raises(RuntimeError):
-        message_handler.report_additional_status("testing", "hello world")
-    message_handler._messageHandler__status_lock.release()
+        message_handler_local.report_additional_status("testing", "hello world")
+    message_handler_local._messageHandler__status_lock.release()
 
     # test key return
-    assert not message_handler._messageHandler__report_bytes_lock.locked()
+    assert not message_handler_local._messageHandler__report_bytes_lock.locked()
