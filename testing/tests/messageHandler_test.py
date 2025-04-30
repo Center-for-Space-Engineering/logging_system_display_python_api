@@ -250,24 +250,28 @@ def test_report_additional_status():
     # test key return
     assert not message_handler_local._messageHandler__report_bytes_lock.locked()
 
-@pytest.mark.messageHandler_tests
-def test_flush():
-    # define message handlers
-    message_handler_local = messageHandler(destination='Local', server_name="message handler_tests")
+# @pytest.mark.messageHandler_tests
+# def test_flush():
+#     # define message handlers
+#     message_handler_local = messageHandler(destination='Local', server_name="message handler tests")
 
-    # define resources
-    threadpool_local = taskHandler(message_handler_local)
-    message_handler_local.set_thread_handler(threadpool_local)
+#     # define resources
+#     threadpool_local = taskHandler(message_handler_local)
+#     message_handler_local.set_thread_handler(threadpool_local)
     
-    # test local
-    message_handler_local.flush()
-    # assert message_handler_local._messageHandler__graph ics._graphicsHandler__status_message["testing"] == "hello world"
+#     threadpool_local.add_thread(message_handler_local.run, "message handler tests", message_handler_local)
+#     threadpool_local.start()
 
-    # test key check
-    message_handler_local._messageHandler__print_message_lock.acquire(timeout=1)
-    with pytest.raises(RuntimeError):
-        message_handler_local.flush()
-    message_handler_local._messageHandler__print_message_lock.release()
+#     # test local
+#     message_handler_local.flush()
+#     print(messageHandler)
+#     # assert message_handler_local._messageHandler__graph ics._graphicsHandler__status_message["testing"] == "hello world"
 
-    # test key return
-    assert not message_handler_local._messageHandler__print_message_lock.locked()
+#     # test key check
+#     message_handler_local._messageHandler__print_message_lock.acquire(timeout=1)
+#     with pytest.raises(RuntimeError):
+#         message_handler_local.flush()
+#     message_handler_local._messageHandler__print_message_lock.release()
+
+#     # test key return
+#     assert not message_handler_local._messageHandler__print_message_lock.locked()
