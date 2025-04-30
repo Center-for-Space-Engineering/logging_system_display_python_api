@@ -13,6 +13,7 @@ import threading
 import json
 from urllib.parse import parse_qs
 from datetime import datetime
+import time
 
 post_received_event = threading.Event()
 received_post = ""
@@ -43,10 +44,11 @@ def start_server():
     server_thread = threading.Thread(target=server.serve_forever, daemon=True)
     server_thread.start()
 
-    yield
-
-    server.shutdown()
-    server_thread.join()
+    try:
+        yield
+    finally:
+        server.shutdown()
+        server_thread.join()
 
 @pytest.mark.messageHandler_tests
 def test__func_dict_all_callable():
@@ -250,28 +252,40 @@ def test_report_additional_status():
     # test key return
     assert not message_handler_local._messageHandler__report_bytes_lock.locked()
 
-# @pytest.mark.messageHandler_tests
-# def test_flush():
-#     # define message handlers
-#     message_handler_local = messageHandler(destination='Local', server_name="message handler tests")
+@pytest.mark.messageHandler_tests
+def test_run():
+    # define message handlers
+    message_handler_local = messageHandler(destination='Local')
 
-#     # define resources
-#     threadpool_local = taskHandler(message_handler_local)
-#     message_handler_local.set_thread_handler(threadpool_local)
+    # define resources
+    threadpool_local = taskHandler(message_handler_local)
+    message_handler_local.set_thread_handler(threadpool_local)
+    message = print_message_dto("Hello World")
+
+    try:
+        # test local
+        threadpool_local.add_thread(message_handler_local.run, "message handler tests", message_handler_local)
+        threadpool_local.start()
+        assert message_handler_local.get_status() == "STARTED"
+        
+        message_handler_local.make_request("send_message_permanent", [message])
+        while True:
+            try:
+                temp = message_handler_local._messageHandler__graphics._graphicsHandler__messages_permanent[-1]
+                assert temp == (2, [message])
+                break
+            except IndexError:
+                time.sleep(0.01)
+        
+        taskID = message_handler_local.make_request("get_system_emuo")
+        temp = message_handler_local.get_request(taskID)
+        
+        while temp is None:
+            temp = message_handler_local.get_request(taskID)
+        
+        assert temp == message_handler_local._messageHandler__graphics
+
+
+    finally:
+        threadpool_local.kill_tasks()
     
-#     threadpool_local.add_thread(message_handler_local.run, "message handler tests", message_handler_local)
-#     threadpool_local.start()
-
-#     # test local
-#     message_handler_local.flush()
-#     print(messageHandler)
-#     # assert message_handler_local._messageHandler__graph ics._graphicsHandler__status_message["testing"] == "hello world"
-
-#     # test key check
-#     message_handler_local._messageHandler__print_message_lock.acquire(timeout=1)
-#     with pytest.raises(RuntimeError):
-#         message_handler_local.flush()
-#     message_handler_local._messageHandler__print_message_lock.release()
-
-#     # test key return
-#     assert not message_handler_local._messageHandler__print_message_lock.locked()

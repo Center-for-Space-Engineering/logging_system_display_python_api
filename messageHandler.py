@@ -187,7 +187,6 @@ class messageHandler(threadWrapper):
             NOTE: When debugging it is often useful to comment this function out so the screen 
                 doest get spammed.
         '''
-        self.__logger.send_log("I have been run")
         super().set_status("Running")
         while (super().get_running()):
             #check to see if there is another task to be done
