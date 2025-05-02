@@ -242,11 +242,6 @@ class messageHandler(threadWrapper):
         else :
             raise RuntimeError("Could not acquire host name lock")
         return data
-    def get_test(self):
-        '''
-            Tempory function for testing unit tests
-        '''
-        return "testing"
     def create_tap(self, args):
         '''
             This function creates a tap, a tap will send the data it receives from the serial line to the class that created the tap.
