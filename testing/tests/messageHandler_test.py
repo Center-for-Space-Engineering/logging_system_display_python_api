@@ -7,6 +7,7 @@ from logging_system_display_python_api.messageHandler import messageHandler
 from threading_python_api.taskHandler import taskHandler
 from logging_system_display_python_api.DTOs.print_message_dto import print_message_dto
 from logging_system_display_python_api.DTOs.byte_report import byte_report_dto
+from threading_python_api.threadWrapper import threadWrapper # pylint: disable=import-error
 
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import threading
@@ -14,9 +15,69 @@ import json
 from urllib.parse import parse_qs
 from datetime import datetime
 import time
+import random
 
 post_received_event = threading.Event()
 received_post = ""
+
+# define message handlers
+message_handler_local = messageHandler(destination='Local')
+message_handler_server = messageHandler(server_name='Test Server', hostname='127.0.0.1', destination='server', display_name="messageHandler test")
+message_handler_server._messageHandler__host_url = "127.0.0.1:5000"
+
+# set threadpools
+threadpool_local = taskHandler(message_handler_local)
+message_handler_local.set_thread_handler(threadpool_local)
+threadpool_server = taskHandler(message_handler_server)
+message_handler_server.set_thread_handler(threadpool_server)
+
+#define resources
+message = print_message_dto("Hello World")
+now_str = str(datetime.now())
+
+def assert_keys_checked_and_returned(lock, test_function, args=()):
+    # test key check
+    lock.acquire(timeout=1)
+    with pytest.raises(RuntimeError):
+        if args == ():
+            test_function()
+        else:
+            test_function(*args)
+    lock.release()
+
+    # test key return
+    test_function(*args)
+    acquired = lock.acquire(timeout=0.1)  # Try to acquire after the function
+    assert acquired
+
+    if acquired:
+        lock.release()
+
+class Mock (threadWrapper):
+    def __init__(self, coms, thread_name):
+        self.__function_dict = {
+            'test' : self.test,
+            'test_args' : self.test_args
+        }
+        super().__init__(self.__function_dict)
+
+        self.__coms = coms
+        self.__thread_name = thread_name
+
+        self.random_return = random.random()
+
+        self.test_ran = 0
+        self.test_args_ran = 0
+        self.test_agrs_args = []
+
+    def test(self):
+        self.test_ran += 1
+        return self.random_return
+    
+    def test_args(self, foo):
+        self.test_args_ran += 1
+        self.test_agrs_args.append(foo)
+        return foo
 
 @pytest.fixture(scope="session", autouse=True)
 def start_server():
@@ -52,9 +113,7 @@ def start_server():
 
 @pytest.mark.messageHandler_tests
 def test__func_dict_all_callable():
-    message_handler = messageHandler()
-
-    for _key, value in message_handler._messageHandler__func_dict.items():
+    for _key, value in message_handler_local._messageHandler__func_dict.items():
         print(_key, value, callable(value))
         if not callable(value):
             assert False
@@ -63,23 +122,10 @@ def test__func_dict_all_callable():
 
 @pytest.mark.messageHandler_tests
 def test_set_thread_handler():
-    message_handler = messageHandler()
-
-    threadpool = taskHandler(message_handler)
-    message_handler.set_thread_handler(threadpool)
-
-    assert message_handler._messageHandler__thread_handler == threadpool
+    assert message_handler_local._messageHandler__thread_handler == threadpool_local
 
 @pytest.mark.messageHandler_tests
-def test_send_message_permanent():
-    # define message handlers
-    message_handler_local = messageHandler(destination='Local')
-    message_handler_server = messageHandler(server_name='Test Server', hostname='127.0.0.1', destination='server', display_name="messageHandler test")
-    message_handler_server._messageHandler__host_url = "127.0.0.1:5000"
-
-    # define resources
-    message = print_message_dto("Hello World")
-    
+def test_send_message_permanent():    
     # test local
     message_handler_local.send_message_permanent(message, typeM=2)
     assert message_handler_local._messageHandler__graphics._graphicsHandler__messages_permanent[-1] == (2, message)
@@ -98,25 +144,10 @@ def test_send_message_permanent():
 
     assert received_post == expected_data
 
-    # test key check
-    message_handler_local._messageHandler__permanent_message_lock.acquire(timeout=1)
-    with pytest.raises(RuntimeError):
-        message_handler_local.send_message_permanent(message, typeM=2)
-    message_handler_local._messageHandler__permanent_message_lock.release()
-
-    # test key return
-    assert not message_handler_local._messageHandler__permanent_message_lock.locked()
+    assert_keys_checked_and_returned(message_handler_local._messageHandler__permanent_message_lock, message_handler_local.send_message_permanent, (message, 2))
 
 @pytest.mark.messageHandler_tests
 def test_print_message():
-    # define message handlers
-    message_handler_local = messageHandler(destination='Local')
-    message_handler_server = messageHandler(server_name='Test Server', hostname='127.0.0.1', destination='server', display_name="messageHandler test")
-    message_handler_server._messageHandler__host_url = "127.0.0.1:5000"
-
-    # define resources
-    message = print_message_dto("Hello World")
-    
     # test local
     message_handler_local.print_message(message, typeM=2)
     message_handler_messages = message_handler_local._messageHandler__graphics._graphicsHandler__messages
@@ -138,48 +169,19 @@ def test_print_message():
 
     assert received_post == expected_data
 
-    # test key check
-    message_handler_local._messageHandler__print_message_lock.acquire(timeout=1)
-    with pytest.raises(RuntimeError):
-        message_handler_local.print_message(message, typeM=2)
-    message_handler_local._messageHandler__print_message_lock.release()
-
-    # test key return
-    assert not message_handler_local._messageHandler__print_message_lock.locked()
+    assert_keys_checked_and_returned(message_handler_local._messageHandler__print_message_lock, message_handler_local.print_message, (message, 2))
 
 @pytest.mark.messageHandler_tests
 def test_report_thread():
-    # define message handlers
-    message_handler_local = messageHandler(destination='Local')
-    message_handler_server = messageHandler(server_name='Test Server', hostname='127.0.0.1', destination='server', display_name="messageHandler test")
-    message_handler_server._messageHandler__host_url = "127.0.0.1:5000"
-    
     # test local
     message_handler_local.report_thread("Hello World")
     assert message_handler_local._messageHandler__graphics._graphicsHandler__threads_status == "Hello World"
 
-    # test key check
-    message_handler_local._messageHandler__report_thread_lock.acquire(timeout=1)
-    with pytest.raises(RuntimeError):
-        message_handler_local.report_thread("Hello World")
-    message_handler_local._messageHandler__report_thread_lock.release()
-
-    # test key return
-    assert not message_handler_local._messageHandler__report_thread_lock.locked()
+    assert_keys_checked_and_returned(message_handler_local._messageHandler__report_thread_lock, message_handler_local.report_thread, ("Hello World",))
 
 @pytest.mark.messageHandler_tests
 def test_report_bytes():
-    # define message handlers
-    message_handler_local = messageHandler(destination='Local')
-    message_handler_server = messageHandler(server_name='Test Server', hostname='127.0.0.1', destination='server', display_name="messageHandler test")
-    message_handler_server._messageHandler__host_url = "127.0.0.1:5000"
-
     # define resources
-    threadpool_local = taskHandler(message_handler_local)
-    message_handler_local.set_thread_handler(threadpool_local)
-    threadpool_server = taskHandler(message_handler_server)
-    message_handler_server.set_thread_handler(threadpool_server)
-    now_str = str(datetime.now())
     byte_report = byte_report_dto("testing", now_str, 42)
     
     # test local
@@ -203,28 +205,10 @@ def test_report_bytes():
 
     assert received_post == expected_data
 
-    # test key check
-    message_handler_local._messageHandler__report_bytes_lock.acquire(timeout=1)
-    with pytest.raises(RuntimeError):
-        message_handler_local.report_bytes(byte_report)
-    message_handler_local._messageHandler__report_bytes_lock.release()
-
-    # test key return
-    assert not message_handler_local._messageHandler__print_message_lock.locked()
+    assert_keys_checked_and_returned(message_handler_local._messageHandler__report_bytes_lock, message_handler_local.report_bytes, (byte_report,))
 
 @pytest.mark.messageHandler_tests
-def test_report_additional_status():
-    # define message handlers
-    message_handler_local = messageHandler(destination='Local')
-    message_handler_server = messageHandler(server_name='Test Server', hostname='127.0.0.1', destination='server', display_name="messageHandler test")
-    message_handler_server._messageHandler__host_url = "127.0.0.1:5000"
-
-    # define resources
-    threadpool_local = taskHandler(message_handler_local)
-    message_handler_local.set_thread_handler(threadpool_local)
-    threadpool_server = taskHandler(message_handler_server)
-    message_handler_server.set_thread_handler(threadpool_server)
-    
+def test_report_additional_status(): 
     # test local
     message_handler_local.report_additional_status("testing", "hello world")
     assert message_handler_local._messageHandler__graphics._graphicsHandler__status_message["testing"] == "hello world"
@@ -243,49 +227,67 @@ def test_report_additional_status():
 
     assert received_post == expected_data
 
-    # test key check
-    message_handler_local._messageHandler__status_lock.acquire(timeout=1)
-    with pytest.raises(RuntimeError):
-        message_handler_local.report_additional_status("testing", "hello world")
-    message_handler_local._messageHandler__status_lock.release()
-
-    # test key return
-    assert not message_handler_local._messageHandler__report_bytes_lock.locked()
+    assert_keys_checked_and_returned(message_handler_local._messageHandler__status_lock, message_handler_local.report_additional_status, ("testing", "hello world"))
 
 @pytest.mark.messageHandler_tests
 def test_run():
-    # define message handlers
-    message_handler_local = messageHandler(destination='Local')
+    message_handler = messageHandler(destination='Local')
 
-    # define resources
-    threadpool_local = taskHandler(message_handler_local)
-    message_handler_local.set_thread_handler(threadpool_local)
-    message = print_message_dto("Hello World")
+    threadpool = taskHandler(message_handler)
+    message_handler.set_thread_handler(threadpool)
 
     try:
-        # test local
-        threadpool_local.add_thread(message_handler_local.run, "message handler tests", message_handler_local)
-        threadpool_local.start()
-        assert message_handler_local.get_status() == "STARTED"
+        # test status
+        threadpool.add_thread(message_handler.run, "message handler tests", message_handler)
+        threadpool.start()
+        assert message_handler.get_status() == "STARTED"
         
-        message_handler_local.make_request("send_message_permanent", [message])
+        # test with arguments
+        message_handler.make_request("send_message_permanent", [message])
         while True:
             try:
-                temp = message_handler_local._messageHandler__graphics._graphicsHandler__messages_permanent[-1]
+                temp = message_handler._messageHandler__graphics._graphicsHandler__messages_permanent[-1]
                 assert temp == (2, [message])
                 break
             except IndexError:
                 time.sleep(0.01)
         
-        taskID = message_handler_local.make_request("get_system_emuo")
-        temp = message_handler_local.get_request(taskID)
-        
+        # test without arguments
+        taskID = message_handler.make_request("get_system_emuo")
+        temp = message_handler.get_request(taskID)
         while temp is None:
-            temp = message_handler_local.get_request(taskID)
+            temp = message_handler.get_request(taskID)
+            time.sleep(0.01)
         
-        assert temp == message_handler_local._messageHandler__graphics
+        assert temp == message_handler._messageHandler__graphics
+    finally:
+        threadpool.kill_tasks()
+    
+@pytest.mark.messageHandler_tests
+def test_send_request_and_get_return():
+    mock_obj = Mock(message_handler_local, "mock_thread")
+    threadpool_local.add_thread(mock_obj.run, "mock_thread", mock_obj)
+    threadpool_local.start()
 
+    try:
+        # test send
+        request_id = message_handler_local.send_request("mock_thread", ["test"])
 
+        i = 0
+        while mock_obj.test_ran == 0 and i < 5/0.01:
+            time.sleep(0.01)
+            i += 1
+        assert mock_obj.test_ran == 1
+
+        # test get return
+        assert message_handler_local.get_return("mock_thread", request_id) == mock_obj.random_return
     finally:
         threadpool_local.kill_tasks()
-    
+
+@pytest.mark.messageHandler_tests
+def test_get_host_name():
+    # test local
+    assert message_handler_server.get_host_name() == '127.0.0.1'
+
+    assert_keys_checked_and_returned(message_handler_server._messageHandler__hostName_lock, message_handler_server.get_host_name)
+
