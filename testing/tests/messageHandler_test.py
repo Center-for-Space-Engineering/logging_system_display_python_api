@@ -84,6 +84,11 @@ def start_server():
     class SimpleHandler(BaseHTTPRequestHandler):
         def do_POST(self):
             """Read and validate the JSON data from POST requests"""
+            if self.path == '/return_404':
+                self.send_response(404)
+                self.end_headers()
+                return
+
             content_length = int(self.headers['Content-Length'])
             post_data = self.rfile.read(content_length).decode('utf-8')
 
@@ -286,8 +291,44 @@ def test_send_request_and_get_return():
 
 @pytest.mark.messageHandler_tests
 def test_get_host_name():
-    # test local
     assert message_handler_server.get_host_name() == '127.0.0.1'
 
     assert_keys_checked_and_returned(message_handler_server._messageHandler__hostName_lock, message_handler_server.get_host_name)
 
+@pytest.mark.messageHandler_tests
+def test_create_tap():
+    def fake_function():
+        pass
+
+    message_handler_local.create_tap((fake_function, "test"))
+
+    assert message_handler_local._messageHandler__tap_requests[-1] == fake_function
+    assert message_handler_local._messageHandler__subscriber[-1] == "test"
+
+@pytest.mark.messageHandler_tests
+def test_set_host_url():
+    message_handler_local.set_host_url(('127.0.0.1',))
+    assert message_handler_local._messageHandler__host_url == '127.0.0.1'
+
+    assert_keys_checked_and_returned(message_handler_local._messageHandler__host_url_lock, message_handler_local.set_host_url, ('127.0.0.1',))
+
+@pytest.mark.messageHandler_tests
+def test_send_post():
+    # test no temp_url
+    value = message_handler_local.send_post(({'foo': 'bar', 'answer': 42}, '/test'))
+    assert value is None
+
+    # test temp_url and request == "NA"
+    message_handler_local.set_host_url(('127.0.0.1:5000',))
+    value = message_handler_local.send_post(({'foo': 'bar', 'answer': 42},))
+    assert value.status_code == 200
+
+    # test temp_url and request != "NA"
+    value = message_handler_local.send_post(({'foo': 'bar', 'answer': 42}, '/test'))
+    assert value.status_code == 200
+
+    # test responce code not 200
+    value = message_handler_local.send_post(({'foo': 'bar', 'answer': 42},'/return_404'))
+    assert value.status_code == 404
+
+    assert_keys_checked_and_returned(message_handler_local._messageHandler__host_url_lock, message_handler_local.send_post, ("trash",))
