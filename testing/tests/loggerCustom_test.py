@@ -10,7 +10,7 @@ from logging_system_display_python_api.logger import loggerCustom
 
 logger_folder = "logging_system_display_python_api/testing/logs_test/"
 
-@pytest.mark.logger_tests
+@pytest.mark.loggerCustom_tests
 def test_logger_init_logs_folder_not_exist(request):
     try:
         shutil.rmtree(logger_folder)
@@ -23,7 +23,7 @@ def test_logger_init_logs_folder_not_exist(request):
 
     request.addfinalizer(clean_up)
 
-@pytest.mark.logger_tests
+@pytest.mark.loggerCustom_tests
 def test_logger_init_logs_folder_does_exist(request):
     try:
         os.mkdir(logger_folder)
@@ -36,7 +36,7 @@ def test_logger_init_logs_folder_does_exist(request):
 
     request.addfinalizer(clean_up)
 
-@pytest.mark.logger_tests
+@pytest.mark.loggerCustom_tests
 def test_logger_send_log(request):
     test_logger = loggerCustom(f"{logger_folder}test.txt", log_directory=logger_folder)
     test_logger.send_log("this is a log test")
@@ -46,7 +46,7 @@ def test_logger_send_log(request):
     
     request.addfinalizer(clean_up)
 
-@pytest.mark.logger_tests
+@pytest.mark.loggerCustom_tests
 def test_logger_send_two_logs(request):
     test_logger = loggerCustom(f"{logger_folder}test.txt", log_directory=logger_folder)
     test_logger.send_log("this is a log test")
