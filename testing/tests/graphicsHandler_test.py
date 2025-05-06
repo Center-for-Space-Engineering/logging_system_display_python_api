@@ -85,3 +85,53 @@ def test_write_thread_report():
     assert fake_coms_obj.messages[1] == ['testing']
 
     assert graphics_handler._graphicsHandler__threads_status == []
+
+@pytest.mark.graphicsHandler_tests
+def test_report_byte():
+    byte_report = byte_report_dto("test thread", '08-06-1945_08:15', 8128)
+    byte_report_server_dict = graphics_handler._graphicsHandler__byte_report_server
+    byte_report_list = graphics_handler._graphicsHandler__byte_report
+
+    # test adding a byte report when the server doesn't exist in the dictionaryyy
+    assert 'test thread' not in byte_report_server_dict
+    
+    graphics_handler.report_byte(byte_report)
+    
+    assert 'test thread' in byte_report_server_dict
+    assert byte_report_server_dict['test thread'][-1] == {'time' : byte_report.get_time(), 'bytes': byte_report.get_byte_count()}
+    assert byte_report_list[-1] == str(byte_report)
+
+    # test adding a byte report when it does exist in the dictionary
+    graphics_handler.report_byte(byte_report)
+
+    assert byte_report_server_dict['test thread'][-1] == {'time' : byte_report.get_time(), 'bytes': byte_report.get_byte_count()}
+
+    # test if the FIFO queue is size limited
+    for x in range(15):
+        graphics_handler.report_byte(byte_report)
+    
+    assert len(byte_report_list) == 9
+
+
+@pytest.mark.graphicsHandler_tests
+def test_write_byte_report():
+    graphics_handler.write_byte_report()
+
+    assert fake_coms_obj.server_name == 'test server'
+    assert fake_coms_obj.messages[0] == 'report_byte_status'
+    assert fake_coms_obj.messages[1] == graphics_handler._graphicsHandler__byte_report_server
+
+@pytest.mark.graphicsHandler_tests
+def test_report_additionaly_status():
+    message = {'test': 'more test', 'testing again': 64}
+    graphics_handler.report_additional_status('test thread', message)
+
+    assert graphics_handler._graphicsHandler__status_message['test thread'] == message
+
+@pytest.mark.graphicsHandler_tests
+def test_disp_additional_status():   
+    graphics_handler.disp_additional_status()
+
+    assert fake_coms_obj.server_name == 'test server'
+    assert fake_coms_obj.messages[0] == 'report_status'
+    assert fake_coms_obj.messages[1] == graphics_handler._graphicsHandler__status_message
