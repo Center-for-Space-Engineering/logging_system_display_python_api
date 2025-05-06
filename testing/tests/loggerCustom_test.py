@@ -1,8 +1,5 @@
-'''
-    This is a unit test for the logger
-'''
-
 import pytest
+
 import os
 import shutil
 import re

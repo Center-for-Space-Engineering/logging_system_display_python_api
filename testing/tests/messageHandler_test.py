@@ -1,8 +1,5 @@
-'''
-    This is a unit test for the logger
-'''
-
 import pytest
+
 from logging_system_display_python_api.messageHandler import messageHandler
 from threading_python_api.taskHandler import taskHandler
 from logging_system_display_python_api.DTOs.print_message_dto import print_message_dto

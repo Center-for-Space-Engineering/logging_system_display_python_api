@@ -1,17 +1,6 @@
 import pytest
-from logging_system_display_python_api.messageHandler import messageHandler
-from threading_python_api.taskHandler import taskHandler
-from logging_system_display_python_api.DTOs.print_message_dto import print_message_dto
-from logging_system_display_python_api.DTOs.byte_report import byte_report_dto
-from threading_python_api.threadWrapper import threadWrapper # pylint: disable=import-error
 
-from http.server import BaseHTTPRequestHandler, HTTPServer
-import threading
-import json
-from urllib.parse import parse_qs
-from datetime import datetime
-import time
-import random
+from logging_system_display_python_api.DTOs.byte_report import byte_report_dto
 
 byte_report = byte_report_dto("test thread", '08-06-1945_08:15', 8128)
 
