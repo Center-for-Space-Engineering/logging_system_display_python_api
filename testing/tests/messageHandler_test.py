@@ -1,4 +1,5 @@
 import pytest
+from unittest.mock import MagicMock
 
 from logging_system_display_python_api.messageHandler import messageHandler
 from threading_python_api.taskHandler import taskHandler
@@ -181,15 +182,32 @@ def test_report_thread():
 
     assert_keys_checked_and_returned(message_handler_local._messageHandler__report_thread_lock, message_handler_local.report_thread, ("Hello World",))
 
+    # test server
+    message_handler_server.report_thread("Hola Mundo")
+
 @pytest.mark.messageHandler_tests
-def test_report_bytes():
+def test_report_byte():
     # define resources
     byte_report = byte_report_dto("testing", now_str, 42)
     
     # test local
+    temp = message_handler_local.send_request
+    message_handler_local.send_request = MagicMock()
+
+    # test not already in reports list
     message_handler_local.report_bytes(byte_report)
     assert message_handler_local._messageHandler__graphics._graphicsHandler__byte_report[-1] == str(byte_report)
+    assert message_handler_local.send_request.call_count == 2
+
+    # test already in reports list
+    message_handler_local._messageHandler__reports_list.append("testing_byte_report")
+    message_handler_local.report_bytes(byte_report)
+
+    assert message_handler_local._messageHandler__graphics._graphicsHandler__byte_report[-1] == str(byte_report)
+    assert message_handler_local.send_request.call_count == 3
     
+    message_handler_local.send_request = temp
+
     # test server
     message_handler_server.report_bytes(byte_report)
 
@@ -312,6 +330,7 @@ def test_set_host_url():
 @pytest.mark.messageHandler_tests
 def test_send_post():
     # test no temp_url
+    message_handler_local.set_host_url(('',))
     value = message_handler_local.send_post(({'foo': 'bar', 'answer': 42}, '/test'))
     assert value is None
 

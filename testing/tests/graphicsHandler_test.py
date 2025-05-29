@@ -11,6 +11,9 @@ class fakeComs():
     def send_request(self, server_name, messages):
         self.server_name = server_name
         self.messages = messages
+    def clear(self):
+        self.server_name = None
+        self.messages = []
 
 fake_coms_obj = fakeComs()
 graphics_handler = graphicsHandler(coms=fake_coms_obj, server_name='test server')
@@ -50,6 +53,8 @@ def test_send_message_permanent():
 
 @pytest.mark.graphicsHandler_tests
 def test_write_message_permanent_log():
+    fake_coms_obj.clear()
+
     message = print_message_dto('hello world')
     graphics_handler.send_message_permanent(2, message)
 
@@ -67,6 +72,15 @@ def test_report_thread():
 
 @pytest.mark.graphicsHandler_tests
 def test_write_thread_report():
+    fake_coms_obj.clear()
+
+    # test with nothing to report
+    graphics_handler._graphicsHandler__threads_status = []
+    graphics_handler.write_thread_report()
+
+    assert graphics_handler._graphicsHandler__threads_status == []
+
+    # test after adding
     graphics_handler.report_thread(['testing'])
     graphics_handler.write_thread_report()
     
@@ -105,6 +119,8 @@ def test_report_byte():
 
 @pytest.mark.graphicsHandler_tests
 def test_write_byte_report():
+    fake_coms_obj.clear()
+
     graphics_handler.write_byte_report()
 
     assert fake_coms_obj.server_name == 'test server'
@@ -120,6 +136,8 @@ def test_report_additionaly_status():
 
 @pytest.mark.graphicsHandler_tests
 def test_disp_additional_status():   
+    fake_coms_obj.clear()
+
     graphics_handler.disp_additional_status()
 
     assert fake_coms_obj.server_name == 'test server'
