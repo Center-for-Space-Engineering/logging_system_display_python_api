@@ -37,7 +37,12 @@ class messageHandler(threadWrapper):
             'print_message' : self.print_message,
             'report_thread' : self.report_thread,
             'report_bytes' : self.report_bytes,
+            'flush' : self.flush,
+            'flush_prem' : self.flush_prem,
+            'flush_thread_report' : self.flush_thread_report,
+            'flush_bytes' : self.flush_bytes,
             'report_additional_status' : self.report_additional_status,
+            'flush_status' : self.flush_status,
             'run' : self.run,
             'get_system_emuo' : self.get_system_emuo,
             'send_request' : self.send_request,
@@ -181,6 +186,42 @@ class messageHandler(threadWrapper):
 
             # Send the POST request
             self.send_post([data])
+    def flush(self):
+        # pylint: disable=missing-function-docstring
+        if self.__print_message_lock.acquire(timeout=1): # pylint: disable=R1732
+            self.__graphics.write_message_log()
+            self.__print_message_lock.release()
+        else :
+            raise RuntimeError("Could not acquire print message lock")
+    def flush_prem(self):
+        # pylint: disable=missing-function-docstring
+        if self.__permanent_message_lock.acquire(timeout=1): # pylint: disable=R1732
+            self.__graphics.write_message_permanent_log()
+            self.__permanent_message_lock.release()
+        else :
+            raise RuntimeError("Could not acquire permanent message lock")
+    def flush_thread_report(self):
+        # pylint: disable=missing-function-docstring
+        if self.__report_thread_lock.acquire(timeout=1): # pylint: disable=R1732
+            self.__graphics.write_thread_report()
+            self.__report_thread_lock.release()
+        else :
+            raise RuntimeError("Could not acquire report thread lock")
+    def flush_bytes(self):
+        # pylint: disable=missing-function-docstring
+        if self.__report_bytes_lock.acquire(timeout=1): # pylint: disable=R1732
+            self.__graphics.write_byte_report()
+            self.__report_bytes_lock.release()
+        else :
+            raise RuntimeError("Could not acquire report bytes lock")
+
+    def flush_status(self):
+        # pylint: disable=missing-function-docstring
+        if self.__status_lock.acquire(timeout=1): # pylint: disable=R1732
+            self.__graphics.disp_additional_status()
+            self.__status_lock.release()
+        else :
+            raise RuntimeError("Could not acquire status lock")
     def run(self, refresh = 1): 
         '''
             This function prints thins in the order we want to see them to the screen.
@@ -194,10 +235,17 @@ class messageHandler(threadWrapper):
             # check to see if there is a request
             if request is not None:
                 if len(request[1]) > 0:
-                    request[3] = self.__func_dict[request[0]](request[1]) # if it stopps working change this back to __function_dict
+                    request[3] = self.__function_dict[request[0]](request[1])
                 else : 
-                    request[3] = self.__func_dict[request[0]]()
+                    request[3] = self.__function_dict[request[0]]()
                 super().complete_request(request[4], request[3])
+
+            if self.__logging and self.__destination == "Local":
+                self.flush_prem()
+                self.flush_status()
+                self.flush_thread_report()
+                self.flush()
+                self.flush_bytes()
             time.sleep(refresh)
     def get_system_emuo(self):
         # pylint: disable=missing-function-docstring
@@ -242,6 +290,11 @@ class messageHandler(threadWrapper):
         else :
             raise RuntimeError("Could not acquire host name lock")
         return data
+    def get_test(self):
+        '''
+            Tempory function for testing unit tests
+        '''
+        return "testing"
     def create_tap(self, args):
         '''
             This function creates a tap, a tap will send the data it receives from the serial line to the class that created the tap.
