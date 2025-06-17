@@ -235,9 +235,9 @@ class messageHandler(threadWrapper):
             # check to see if there is a request
             if request is not None:
                 if len(request[1]) > 0:
-                    request[3] = self.__function_dict[request[0]](request[1])
+                    request[3] = self.__func_dict[request[0]](request[1])
                 else : 
-                    request[3] = self.__function_dict[request[0]]()
+                    request[3] = self.__func_dict[request[0]]()
                 super().complete_request(request[4], request[3])
 
             if self.__logging and self.__destination == "Local":

@@ -1,7 +1,8 @@
 import pytest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch, call
 
 from logging_system_display_python_api.messageHandler import messageHandler
+import logging_system_display_python_api.messageHandler as mH
 from threading_python_api.taskHandler import taskHandler
 from logging_system_display_python_api.DTOs.print_message_dto import print_message_dto
 from logging_system_display_python_api.DTOs.byte_report import byte_report_dto
@@ -11,7 +12,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import threading
 import json
 from urllib.parse import parse_qs
-from datetime import datetime
+from datetime import datetime, timedelta
 import time
 import random
 
@@ -117,7 +118,6 @@ def start_server():
 @pytest.mark.messageHandler_tests
 def test__func_dict_all_callable():
     for _key, value in message_handler_local._messageHandler__func_dict.items():
-        print(_key, value, callable(value))
         if not callable(value):
             assert False
         
@@ -251,37 +251,44 @@ def test_report_additional_status():
 
 @pytest.mark.messageHandler_tests
 def test_run():
-    message_handler = messageHandler(destination='Local')
+    with patch.object(mH.threadWrapper, 'complete_request') as mocked_complete_request:
+            
+        message_handler = messageHandler(destination='Local')
 
-    threadpool = taskHandler(message_handler)
-    message_handler.set_thread_handler(threadpool)
+        threadpool = taskHandler(message_handler)
+        message_handler.set_thread_handler(threadpool)
 
-    try:
-        # test status
-        threadpool.add_thread(message_handler.run, "message handler tests", message_handler)
-        threadpool.start()
-        assert message_handler.get_status() == "STARTED"
-        
-        # test with arguments
-        message_handler.make_request("send_message_permanent", [message])
-        while True:
-            try:
-                temp = message_handler._messageHandler__graphics._graphicsHandler__messages_permanent[-1]
-                assert temp == (2, [message])
-                break
-            except IndexError:
+        try:
+            # test status
+            threadpool.add_thread(message_handler.run, "message handler tests", message_handler)
+            threadpool.start()
+            assert message_handler.get_status() == "STARTED"
+            
+            # test with arguments
+            message_handler.send_message_permanent = MagicMock(return_value=777)
+            message_handler._messageHandler__func_dict["send_message_permanent"] = message_handler.send_message_permanent
+            message_handler.make_request("send_message_permanent", [message])
+
+            start = datetime.now()
+            while len(mocked_complete_request.call_args_list) < 1 and datetime.now() - start < timedelta(seconds=10):
                 time.sleep(0.01)
-        
-        # test without arguments
-        taskID = message_handler.make_request("get_system_emuo")
-        temp = message_handler.get_request(taskID)
-        while temp is None:
-            temp = message_handler.get_request(taskID)
-            time.sleep(0.01)
-        
-        assert temp == message_handler._messageHandler__graphics
-    finally:
-        threadpool.kill_tasks()
+            
+            assert mocked_complete_request.call_args_list[-1] == call(1, 777)
+            message_handler.send_message_permanent.assert_called_once_with([message])
+
+            # test without arguments
+            message_handler.get_system_emuo = MagicMock(return_value=777)
+            message_handler._messageHandler__func_dict["get_system_emuo"] = message_handler.get_system_emuo
+            message_handler.make_request("get_system_emuo")
+
+            start = datetime.now()
+            while len(mocked_complete_request.call_args_list) < 2 and datetime.now() - start < timedelta(seconds=10):
+                time.sleep(0.01)
+            
+            assert mocked_complete_request.call_args_list[-1] == call(2, 777)
+            message_handler.get_system_emuo.assert_called_once_with()
+        finally:
+            threadpool.kill_tasks()
     
 @pytest.mark.messageHandler_tests
 def test_send_request_and_get_return():
