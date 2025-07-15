@@ -1,3 +1,7 @@
+''' tests for the logger_dto module'''
+# pylint: disable=C0116
+# pylint: disable=W0212
+
 import pytest
 
 from logging_system_display_python_api.DTOs.logger_dto import logger_dto

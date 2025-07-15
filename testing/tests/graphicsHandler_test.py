@@ -1,9 +1,14 @@
+''' tests for the message_handler module'''
+# pylint: disable=C0116
+# pylint: disable=W0212
+
 import pytest
 
 from logging_system_display_python_api.DTOs.print_message_dto import print_message_dto
 from logging_system_display_python_api.DTOs.byte_report import byte_report_dto
 from logging_system_display_python_api.graphicsHandler import graphicsHandler
 
+# pylint: disable=C0115
 class fakeComs():
     def __init__(self):
         self.server_name = None
@@ -78,7 +83,7 @@ def test_write_thread_report():
     graphics_handler._graphicsHandler__threads_status = []
     graphics_handler.write_thread_report()
 
-    assert graphics_handler._graphicsHandler__threads_status == []
+    assert not graphics_handler._graphicsHandler__threads_status
 
     # test after adding
     graphics_handler.report_thread(['testing'])
@@ -88,7 +93,7 @@ def test_write_thread_report():
     assert fake_coms_obj.messages[0] == 'thread_report'
     assert fake_coms_obj.messages[1] == ['testing']
 
-    assert graphics_handler._graphicsHandler__threads_status == []
+    assert not graphics_handler._graphicsHandler__threads_status
 
 @pytest.mark.graphicsHandler_tests
 def test_report_byte():
@@ -111,7 +116,7 @@ def test_report_byte():
     assert byte_report_server_dict['test thread'][-1] == {'time' : byte_report.get_time(), 'bytes': byte_report.get_byte_count()}
 
     # test if the FIFO queue is size limited
-    for x in range(15):
+    for _ in range(15):
         graphics_handler.report_byte(byte_report)
     
     assert len(byte_report_list) == 9

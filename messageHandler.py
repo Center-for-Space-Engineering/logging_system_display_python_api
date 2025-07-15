@@ -350,7 +350,7 @@ class messageHandler(threadWrapper):
                 # Check the response
                 if response.status_code != 200:
                     print(f'POST request to {temp_url} failed with status code: {response.status_code}')
-        except Exception as e: # pylint: disable=W0702
+        except Exception: # pylint: disable=W0718
             #if request fails just move on
             pass
         return response

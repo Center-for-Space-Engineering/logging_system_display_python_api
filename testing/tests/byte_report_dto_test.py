@@ -1,3 +1,7 @@
+''' tests for the byte_report module'''
+# pylint: disable=C0116
+# pylint: disable=W0212
+
 import pytest
 
 from logging_system_display_python_api.DTOs.byte_report import byte_report_dto

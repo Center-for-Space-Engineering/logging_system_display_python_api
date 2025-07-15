@@ -1,3 +1,7 @@
+''' tests for the message_handler module'''
+# pylint: disable=C0116
+# pylint: disable=W0212
+
 import pytest
 
 from logging_system_display_python_api.DTOs.print_message_dto import print_message_dto

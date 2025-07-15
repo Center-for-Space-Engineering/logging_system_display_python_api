@@ -1,3 +1,7 @@
+''' tests for the byte_report module'''
+# pylint: disable=C0116
+# pylint: disable=W0212
+
 import pytest
 from unittest.mock import MagicMock, patch, call
 
@@ -52,16 +56,18 @@ def assert_keys_checked_and_returned(lock, test_function, args=()):
     if acquired:
         lock.release()
 
+# pylint: disable=C0115
 class Mock (threadWrapper):
-    def __init__(self, coms, thread_name):
+    # def __init__(self, coms, thread_name):
+    def __init__(self):
         self.__function_dict = {
             'test' : self.test,
             'test_args' : self.test_args
         }
         super().__init__(self.__function_dict)
 
-        self.__coms = coms
-        self.__thread_name = thread_name
+        # self.__coms = coms
+        # self.__thread_name = thread_name
 
         self.random_return = random.random()
 
@@ -73,10 +79,10 @@ class Mock (threadWrapper):
         self.test_ran += 1
         return self.random_return
     
-    def test_args(self, foo):
+    def test_args(self, temp):
         self.test_args_ran += 1
-        self.test_agrs_args.append(foo)
-        return foo
+        self.test_agrs_args.append(temp)
+        return temp
 
 @pytest.fixture(scope="session", autouse=True)
 def start_server():
@@ -96,7 +102,7 @@ def start_server():
             except json.JSONDecodeError:
                 received_data = parse_qs(post_data) # Parse form data
 
-            global received_post
+            global received_post # pylint: disable=W0603
             received_post = received_data
 
             self.send_response(200)
@@ -292,7 +298,8 @@ def test_run():
     
 @pytest.mark.messageHandler_tests
 def test_send_request_and_get_return():
-    mock_obj = Mock(message_handler_local, "mock_thread")
+    # mock_obj = Mock(message_handler_local, "mock_thread")
+    mock_obj = Mock()
     threadpool_local.add_thread(mock_obj.run, "mock_thread", mock_obj)
     threadpool_local.start()
 
@@ -324,7 +331,7 @@ def test_create_tap():
 
     message_handler_local.create_tap((fake_function, "test"))
 
-    assert message_handler_local._messageHandler__tap_requests[-1] == fake_function
+    assert message_handler_local._messageHandler__tap_requests[-1] is fake_function
     assert message_handler_local._messageHandler__subscriber[-1] == "test"
 
 @pytest.mark.messageHandler_tests

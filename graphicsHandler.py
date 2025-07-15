@@ -26,7 +26,7 @@ class graphicsHandler():
         self.__coms = coms
         self.__status_message = {}
         self.__server_name = server_name
-        # self.__logger = loggerCustom("logs/graphicsHandler.txt")
+        self.__logger = loggerCustom("logs/graphicsHandler.txt") # pylint: disable=W0238
 
     def write_message_log(self):
         # pylint: disable=missing-function-docstring

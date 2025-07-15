@@ -1,3 +1,7 @@
+''' tests for the loggerCustom module'''
+# pylint: disable=C0116
+# pylint: disable=W0212
+
 import pytest
 
 import os
@@ -58,5 +62,4 @@ def clean_up():
     try:
         shutil.rmtree(logger_folder)
     except FileNotFoundError:
-        print("flag")
         pass
